@@ -1,7 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { FormEvent } from "react";
+import { useForm } from "react-hook-form";
+import {
+  FieldErrorMessage,
+  FormErrorAnnouncer,
+} from "@/components/ui/FormErrorFeedback";
+import {
+  chatMessageSchema,
+  type ChatMessageFormValues,
+} from "@/lib/form-schemas";
+import { zodResolver } from "@/lib/zod-resolver";
 
 type ChatMessage = { id: string; senderId: string; senderName: string; body: string; createdAt: string };
 type Conversation = { id: string; requesterId: string; agentId: string | null; status: "waiting" | "active" | "closed"; startedAt: string };
@@ -10,9 +19,20 @@ type ChatData = { conversation: Conversation | null; messages: ChatMessage[]; cu
 export function ChatQueue({ conversations }: { conversations: Conversation[] }) {
   const [selectedId, setSelectedId] = useState(conversations[0]?.id ?? "");
   const [chat, setChat] = useState<ChatData | null>(null);
-  const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, submitCount },
+  } = useForm<ChatMessageFormValues>({
+    resolver: zodResolver(chatMessageSchema),
+    mode: "onTouched",
+    reValidateMode: "onChange",
+    defaultValues: { body: "" },
+  });
 
   const refresh = useCallback(async () => {
     if (!selectedId) return;
@@ -52,10 +72,9 @@ export function ChatQueue({ conversations }: { conversations: Conversation[] }) 
     return true;
   }
 
-  async function send(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!message.trim() || busy) return;
-    if (await act("message", message.trim())) setMessage("");
+  async function onSend(values: ChatMessageFormValues) {
+    if (busy) return;
+    if (await act("message", values.body)) reset();
   }
 
   const selected = conversations.find((item) => item.id === selectedId);
@@ -81,7 +100,25 @@ export function ChatQueue({ conversations }: { conversations: Conversation[] }) 
           {chat?.messages.map((item) => <article key={item.id} className={`max-w-[85%] rounded-xl p-3 ${item.senderId === chat.currentUserId ? "ml-auto bg-[#7A1F14] text-white" : "border border-ceda-line bg-[#FFF9F4] text-ceda-ink"}`}><p className="text-xs font-semibold">{item.senderName}</p><p className="mt-1 whitespace-pre-wrap text-sm leading-6">{item.body}</p><time className="mt-1 block text-right text-[10px] opacity-70" dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleTimeString("en-BW", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Gaborone" })}</time></article>)}
           {chat && chat.messages.length === 0 && <p className="text-sm text-ceda-muted">No messages have been sent yet.</p>}
         </div>
-        {assignedToMe && chat?.conversation?.status === "active" && <form onSubmit={send} className="flex gap-2 border-t border-ceda-line p-3"><label htmlFor="consultant-reply" className="sr-only">Reply to requester</label><input id="consultant-reply" value={message} onChange={(event) => setMessage(event.target.value)} maxLength={2000} required className="min-h-11 flex-1 rounded-lg border border-ceda-line px-3 text-sm" placeholder="Write a reply" /><button type="submit" disabled={busy || !message.trim()} className="min-h-11 rounded-full bg-ceda-burgundy px-4 text-sm font-bold text-white disabled:opacity-60">Send</button></form>}
+        {assignedToMe && chat?.conversation?.status === "active" && <>
+          <FormErrorAnnouncer errors={errors} submitCount={submitCount} />
+          <form noValidate onSubmit={handleSubmit(onSend)} className="border-t border-ceda-line p-3">
+            <div className="flex gap-2">
+              <label htmlFor="consultant-reply" className="sr-only">Reply to requester</label>
+              <input
+                id="consultant-reply"
+                maxLength={2000}
+                aria-invalid={errors.body ? "true" : "false"}
+                aria-describedby={errors.body ? "consultant-reply-error" : undefined}
+                className="ds-field-control min-h-11 flex-1 rounded-lg border border-ceda-line px-3 text-sm"
+                placeholder="Write a reply"
+                {...register("body")}
+              />
+              <button type="submit" disabled={busy} className="min-h-11 rounded-full bg-ceda-burgundy px-4 text-sm font-bold text-white disabled:opacity-60">Send</button>
+            </div>
+            <FieldErrorMessage id="consultant-reply-error" message={errors.body?.message} />
+          </form>
+        </>}
       </>}
     </section>
   </div>;

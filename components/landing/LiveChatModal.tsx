@@ -1,8 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { AlertTriangle, Clock, MessageSquare, Send, X } from "lucide-react";
+import {
+  FieldErrorMessage,
+  FormErrorAnnouncer,
+} from "@/components/ui/FormErrorFeedback";
+import {
+  chatMessageSchema,
+  type ChatMessageFormValues,
+} from "@/lib/form-schemas";
+import { zodResolver } from "@/lib/zod-resolver";
 
 type Message = { id: string; senderId: string; senderName: string; body: string; createdAt: string };
 type Conversation = { id: string; status: "waiting" | "active" | "closed"; startedAt: string };
@@ -22,9 +32,20 @@ function LiveChatWindow({ onClose }: Pick<LiveChatModalProps, "onClose">) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [chat, setChat] = useState<ChatState | null>(null);
   const [signedOut, setSignedOut] = useState(false);
-  const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, submitCount },
+  } = useForm<ChatMessageFormValues>({
+    resolver: zodResolver(chatMessageSchema),
+    mode: "onTouched",
+    reValidateMode: "onChange",
+    defaultValues: { body: "" },
+  });
 
   const refresh = useCallback(async () => {
     const response = await fetch("/api/chat", { cache: "no-store" }).catch(() => null);
@@ -84,15 +105,14 @@ function LiveChatWindow({ onClose }: Pick<LiveChatModalProps, "onClose">) {
     await refresh();
   }
 
-  async function sendMessage(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!message.trim() || !chat?.conversation || busy) return;
+  async function sendMessage(values: ChatMessageFormValues) {
+    if (!chat?.conversation || busy) return;
     setBusy(true);
     setError("");
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action: "message", conversationId: chat.conversation.id, body: message }),
+      body: JSON.stringify({ action: "message", conversationId: chat.conversation.id, body: values.body }),
     }).catch(() => null);
     const result = await response?.json().catch(() => null);
     setBusy(false);
@@ -100,7 +120,7 @@ function LiveChatWindow({ onClose }: Pick<LiveChatModalProps, "onClose">) {
       setError(result?.error ?? "Your message was not sent.");
       return;
     }
-    setMessage("");
+    reset();
     await refresh();
   }
 
@@ -130,7 +150,27 @@ function LiveChatWindow({ onClose }: Pick<LiveChatModalProps, "onClose">) {
           })}
         </div>
         {error && <p className="border-t border-red-800/20 bg-red-50 px-4 py-2 text-xs text-red-900" role="alert">{error}</p>}
-        {conversation && closed ? <div className="border-t border-[#7A1F14]/10 bg-white p-4"><p className="text-center text-xs text-ceda-muted">This conversation is closed.</p><button type="button" onClick={startConversation} disabled={busy} className="mt-3 min-h-10 w-full rounded-full border border-ceda-line text-sm font-semibold text-ceda-burgundy">Start a new conversation</button></div> : conversation && <form onSubmit={sendMessage} aria-label="Send a chat message" className="flex items-center gap-2 border-t border-[#7A1F14]/10 bg-white p-3.5"><label htmlFor="chat-message" className="sr-only">Message to CEDA consultant</label><input id="chat-message" type="text" value={message} onChange={(event) => setMessage(event.target.value)} maxLength={2000} autoComplete="off" placeholder={isOpen ? "Type your message…" : "Leave an offline inquiry…"} className="min-h-11 flex-1 rounded-full border border-[#7A1F14]/20 bg-[#FFF9F4] px-4 text-sm text-[#37231A] placeholder:text-[#573E32]/60 focus-visible:outline-2 focus-visible:outline-[#7A1F14]" /><button type="submit" disabled={busy || !message.trim()} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#7A1F14] text-white hover:bg-[#60170E] disabled:cursor-wait disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7A1F14]" aria-label="Send message"><Send className="h-4 w-4" /></button></form>}
+        {conversation && closed ? <div className="border-t border-[#7A1F14]/10 bg-white p-4"><p className="text-center text-xs text-ceda-muted">This conversation is closed.</p><button type="button" onClick={startConversation} disabled={busy} className="mt-3 min-h-10 w-full rounded-full border border-ceda-line text-sm font-semibold text-ceda-burgundy">Start a new conversation</button></div> : conversation && <>
+          <FormErrorAnnouncer errors={errors} submitCount={submitCount} />
+          <form noValidate onSubmit={handleSubmit(sendMessage)} aria-label="Send a chat message" className="border-t border-[#7A1F14]/10 bg-white p-3.5">
+            <div className="flex items-center gap-2">
+              <label htmlFor="chat-message" className="sr-only">Message to CEDA consultant</label>
+              <input
+                id="chat-message"
+                type="text"
+                maxLength={2000}
+                autoComplete="off"
+                aria-invalid={errors.body ? "true" : "false"}
+                aria-describedby={errors.body ? "chat-message-error" : undefined}
+                placeholder={isOpen ? "Type your message…" : "Leave an offline inquiry…"}
+                className="ds-field-control min-h-11 flex-1 rounded-full border border-[#7A1F14]/20 bg-[#FFF9F4] px-4 text-sm text-[#37231A] placeholder:text-[#573E32]/60 focus-visible:outline-2 focus-visible:outline-[#7A1F14]"
+                {...register("body")}
+              />
+              <button type="submit" disabled={busy} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#7A1F14] text-white hover:bg-[#60170E] disabled:cursor-wait disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7A1F14]" aria-label="Send message"><Send className="h-4 w-4" /></button>
+            </div>
+            <FieldErrorMessage id="chat-message-error" message={errors.body?.message} className="px-2" />
+          </form>
+        </>}
       </>}
     </section>
   </dialog>;

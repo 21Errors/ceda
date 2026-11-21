@@ -1,10 +1,10 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { and, asc, eq, gte, isNull, lte, or } from "drizzle-orm";
+import { and, asc, count, eq, gte, isNull, lte, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { categories, formFields, ideaStageHistory, ideaSubscriptions, ideaVersions, ideas, innovationCalls, workflowStages } from "@/db/schema";
+import { attachments, categories, formFields, ideaStageHistory, ideaSubscriptions, ideaVersions, ideas, innovationCalls, workflowStages } from "@/db/schema";
 import { requireRole } from "@/lib/authorization";
 import { writeAudit } from "@/lib/server/audit";
 import { validateDynamicAnswers } from "@/lib/server/submission-validation";
@@ -150,7 +150,11 @@ export async function submitIdeaAction(formData: FormData): Promise<SubmissionSt
     const queueEvents = evaluatorUsers.filter(({ id }) => id !== user.id).map(({ id }) => ({ userId: id, ideaId: idea.id, type: "evaluation_available", title: "Submission available to review", body: `Submission ${idea.referenceNo} is ready to claim in the evaluator queue.` }));
     emailEvents.push(...queueEvents);
     await insertInAppNotifications(tx, [emailEvents[0], ...queueEvents]);
-    await writeAudit(tx, { actorId: user.id, action: "idea.submitted", entityType: "idea", entityId: idea.id, metadata: { referenceNo: idea.referenceNo, callId: call.id, versionNo: 1 } });
+    const [attachmentTotals] = await tx
+      .select({ total: count() })
+      .from(attachments)
+      .where(eq(attachments.ideaVersionId, idea.currentVersionId!));
+    await writeAudit(tx, { actorId: user.id, action: "idea.submitted", entityType: "idea", entityId: idea.id, metadata: { referenceNo: idea.referenceNo, callId: call.id, versionNo: 1, attachmentCount: Number(attachmentTotals?.total ?? 0) } });
   });
   await dispatchNotificationEmails(emailEvents);
   revalidatePath("/dashboard");

@@ -1,105 +1,172 @@
 import Image from "next/image";
 import Link from "next/link";
-import { AtSign, Play, UsersRound } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 const copyrightYear = 2026;
 
-const columns = [
+const directoryColumns = [
   {
-    title: "Platform",
+    title: "Portal",
     links: [
-      ["News & Updates", "/news"],
-      ["Submit Idea", "/submit"],
-      ["Track Submission", "/track"],
+      { label: "Home", href: "/", external: false },
+      { label: "Submit an idea", href: "/submit", external: false },
+      { label: "Track a submission", href: "/track", external: false },
+      { label: "News and updates", href: "/news", external: false },
     ],
   },
   {
-    title: "Company",
+    title: "Agency",
     links: [
-      ["About CEDA", "/about"],
-      ["Guidelines", "/guidelines"],
-      ["FAQ", "/faq"],
-      ["Help & Support", "/support"],
+      { label: "About CEDA", href: "/about", external: false },
+      { label: "Application guidelines", href: "/guidelines", external: false },
+      { label: "Frequently asked questions", href: "/faq", external: false },
+      { label: "Help and support", href: "/support", external: false },
     ],
   },
   {
-    title: "Legal",
+    title: "Governance",
     links: [
-      ["Terms of Use", "/terms"],
-      ["Privacy Policy", "/privacy"],
-      ["Data Protection Act 2024", "/privacy"],
+      { label: "Terms of use", href: "/terms", external: false },
+      { label: "Privacy information", href: "/privacy", external: false },
+      {
+        label: "Official CEDA website",
+        href: "https://www.ceda.co.bw",
+        external: true,
+      },
     ],
   },
 ] as const;
 
-const socialIcons = [
-  { label: "Social profile placeholder 1", Icon: AtSign },
-  { label: "Social profile placeholder 2", Icon: UsersRound },
-  { label: "Social profile placeholder 3", Icon: Play },
-];
-
 export function Footer() {
   return (
-    <footer className="border-t border-slate-200 bg-white text-sm text-slate-600">
-      <div className="mx-auto grid max-w-[1380px] grid-cols-1 gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 lg:grid-cols-5 lg:gap-8 lg:px-8 lg:py-16">
-        <div className="space-y-4 lg:col-span-2">
-          <Link href="/" className="relative block h-12 w-36" aria-label="CEDA Innovation Portal home">
-            <Image src="/assets/ceda logo.png" alt="CEDA" fill sizes="144px" className="object-contain object-left" />
-          </Link>
-          <p className="max-w-sm leading-6">
-            Citizen Entrepreneurial Development Agency supports citizen entrepreneurs and innovation across Botswana.
-          </p>
-          <div className="flex items-center gap-2 text-xs font-medium text-ceda-burgundy">
-            <span aria-hidden="true" className="h-2 w-2 rounded-full bg-ceda-orange" />
-            <span>Data Protection Act 2024</span>
-          </div>
-          <ul className="flex gap-2" aria-label="CEDA social media placeholders">
-            {socialIcons.map(({ label, Icon }) => (
-              <li key={label}>
-                <span
-                  role="img"
-                  aria-label={`${label} profile placeholder`}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-muted text-slate-500"
-                >
-                  <Icon aria-hidden="true" className="h-4 w-4" />
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {columns.map((column) => (
-          <div key={column.title}>
-            <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-ceda-ink">{column.title}</h2>
-            <ul className="space-y-3">
-              {column.links.map(([label, href]) => (
-                <li key={label}>
-                  <Link href={href} className="transition hover:text-ceda-burgundy focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy">
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-
-        <div>
-          <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-ceda-ink">Contact</h2>
-          <ul className="space-y-3">
-            <li><a className="hover:text-ceda-burgundy" href="mailto:innovation@ceda.co.bw">innovation@ceda.co.bw</a></li>
-            <li>Gaborone, Botswana</li>
-            <li>CEDA Head Office</li>
-          </ul>
-        </div>
+    <footer className="relative isolate overflow-hidden bg-[#4A120B] text-[#EBD9CE]">
+      {/* Four-tone horizon seam echoing the CEDA rising-arc emblem */}
+      <div
+        aria-hidden="true"
+        className="grid h-1.5 w-full grid-cols-[1.6fr_1.2fr_1fr_0.75fr]"
+      >
+        <span className="bg-[#7A1F14]" />
+        <span className="bg-[#C44517]" />
+        <span className="bg-[#E8710A]" />
+        <span className="bg-[#E5A910]" />
       </div>
 
-      <div className="border-t border-slate-200">
-        <div className="mx-auto flex max-w-[1380px] flex-col gap-3 px-4 py-5 text-xs text-slate-500 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-          <p>© {copyrightYear} Citizen Entrepreneurial Development Agency. All rights reserved.</p>
-          <div className="flex gap-5">
-            <Link href="/terms" className="hover:text-ceda-burgundy">Terms of Use</Link>
-            <Link href="/privacy" className="hover:text-ceda-burgundy">Privacy Policy</Link>
+      {/* Restrained architectural arc watermark clipped to the top-right */}
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 560 320"
+        fill="none"
+        className="pointer-events-none absolute -right-24 -top-12 h-64 w-[28rem] opacity-[0.07] sm:h-80 sm:w-[36rem]"
+      >
+        <path
+          d="M36 286C74 128 214 26 368 42C450 50 516 96 548 168"
+          stroke="#F4B58A"
+          strokeWidth="44"
+          strokeLinecap="round"
+        />
+        <path
+          d="M112 288C164 202 276 154 398 176C456 186 502 216 534 256"
+          stroke="#E8710A"
+          strokeWidth="22"
+          strokeLinecap="round"
+        />
+      </svg>
+
+      <div className="relative mx-auto max-w-[var(--container-shell)] px-gutter">
+        {/* Compact institutional identity & navigation directory */}
+        <div className="grid grid-cols-1 gap-10 py-10 md:grid-cols-12 lg:gap-8 lg:py-12">
+          <div className="space-y-4 md:col-span-5 lg:col-span-4">
+            <Link
+              href="/"
+              aria-label="CEDA Innovation Portal home"
+              className="inline-flex rounded-xl bg-white px-3.5 py-2 shadow-sm transition hover:bg-[#FFF9F4] focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#E8710A]"
+            >
+              <span className="relative block h-9 w-24">
+                <Image
+                  src="/assets/ceda logo.png"
+                  alt="CEDA — Citizen Entrepreneurial Development Agency"
+                  fill
+                  sizes="96px"
+                  className="object-contain object-left"
+                />
+              </span>
+            </Link>
+
+            <p className="max-w-xs text-sm leading-6 text-[#E3CCC0]">
+              Citizen Entrepreneurial Development Agency funds, grows, and sustains viable citizen-owned enterprises across Botswana.
+            </p>
+
+            <address className="not-italic">
+              <ul className="space-y-1 text-sm text-[#FDF8F3]/90">
+                <li>CEDA Head Office, Gaborone, Botswana</li>
+                <li>
+                  <a
+                    href="tel:+2673170895"
+                    className="inline-flex min-h-8 items-center tabular-nums underline decoration-[#F4B58A]/40 underline-offset-4 transition hover:text-white hover:decoration-[#F4B58A] focus-visible:rounded-sm focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#E8710A]"
+                  >
+                    +267 317 0895
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="mailto:feedback@ceda.co.bw"
+                    className="inline-flex min-h-8 items-center underline decoration-[#F4B58A]/40 underline-offset-4 transition hover:text-white hover:decoration-[#F4B58A] focus-visible:rounded-sm focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#E8710A]"
+                  >
+                    feedback@ceda.co.bw
+                  </a>
+                </li>
+              </ul>
+            </address>
           </div>
+
+          <nav
+            aria-label="Footer"
+            className="grid grid-cols-1 gap-8 sm:grid-cols-3 md:col-span-7 lg:col-span-8 lg:pl-8"
+          >
+            {directoryColumns.map((column) => (
+              <div key={column.title}>
+                <h2 className="text-sm font-semibold text-[#F4B58A]">
+                  {column.title}
+                </h2>
+                <ul className="mt-3 space-y-1">
+                  {column.links.map((item) => (
+                    <li key={item.label}>
+                      {item.external ? (
+                        <a
+                          href={item.href}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex min-h-8 items-center gap-1.5 text-sm text-[#FDF8F3]/85 transition hover:text-white hover:underline hover:decoration-[#F4B58A] hover:underline-offset-4 focus-visible:rounded-sm focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#E8710A]"
+                        >
+                          <span>{item.label}</span>
+                          <ArrowUpRight
+                            aria-hidden="true"
+                            className="h-3.5 w-3.5 text-[#F4B58A]"
+                          />
+                          <span className="sr-only"> (opens in a new tab)</span>
+                        </a>
+                      ) : (
+                        <Link
+                          href={item.href}
+                          className="inline-flex min-h-8 items-center text-sm text-[#FDF8F3]/85 transition hover:text-white hover:underline hover:decoration-[#F4B58A] hover:underline-offset-4 focus-visible:rounded-sm focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#E8710A]"
+                        >
+                          {item.label}
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </nav>
+        </div>
+
+        {/* Bottom colophon with clearance for floating consultant action */}
+        <div className="flex flex-col gap-2 border-t border-white/12 pb-20 pt-5 text-xs text-[#D9BEB0] sm:flex-row sm:items-center sm:justify-between sm:pb-6 sm:pr-56">
+          <p className="tabular-nums">
+            © {copyrightYear} Citizen Entrepreneurial Development Agency, Botswana.
+          </p>
+          <p>CEDA Innovation Portal</p>
         </div>
       </div>
     </footer>

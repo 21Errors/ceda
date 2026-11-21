@@ -137,7 +137,7 @@ export async function getEvaluatorAssignment(assignmentId: string, evaluatorId: 
   const [submissionFields, submissionAttachments] = await Promise.all([
     db.select({ key: formFields.key, label: formFields.label, helpText: formFields.helpText, sectionKey: formFields.sectionKey, position: formFields.position })
       .from(formFields).where(eq(formFields.callId, assignment.callId)).orderBy(asc(formFields.sectionPosition), asc(formFields.position)),
-    db.select({ id: attachments.id, fileName: attachments.fileName, fileUrl: attachments.fileUrl, mimeType: attachments.mimeType, fileSize: attachments.fileSize })
+    db.select({ id: attachments.id, fileName: attachments.fileName, mimeType: attachments.mimeType, fileSize: attachments.fileSize })
       .from(attachments).where(eq(attachments.ideaVersionId, assignment.currentVersionId)).orderBy(asc(attachments.createdAt)),
   ]);
 

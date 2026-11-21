@@ -25,6 +25,12 @@ export const auth = betterAuth({
   secret: secret ?? (isProductionBuild ? "build-only-placeholder-secret-not-used-at-runtime" : "ceda-local-development-secret-change-before-deploy"),
   trustedOrigins: [baseURL],
   database: drizzleAdapter(db, { provider: "pg", schema, transaction: true }),
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 5,
+    },
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,

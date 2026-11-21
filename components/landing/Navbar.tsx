@@ -2,186 +2,624 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Bell, ChevronDown, LogOut, Menu, Settings, UserRound, X } from "lucide-react";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  Bell,
+  ChevronDown,
+  LogOut,
+  Menu,
+  Settings,
+  UserRound,
+  X,
+} from "lucide-react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
 
-const navigation = [
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+interface NavItem {
+  readonly label: string;
+  readonly href: string;
+}
+
+const PUBLIC_NAVIGATION: readonly NavItem[] = [
   { label: "Home", href: "/" },
   { label: "News", href: "/news" },
+  { label: "Guidelines", href: "/guidelines" },
   { label: "About", href: "/about" },
   { label: "FAQ", href: "/faq" },
 ];
 
 function isCurrentPath(pathname: string, href: string) {
-  return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+  return href === "/"
+    ? pathname === "/"
+    : pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function NavigationLink({ item, active = false, onClick, wide = false }: { item: (typeof navigation)[number]; active?: boolean; onClick: () => void; wide?: boolean }) {
+function getInitials(name?: string | null, email?: string | null) {
+  return (name || email || "U")
+    .trim()
+    .split(/[\s@]+/)
+    .slice(0, 2)
+    .map((part) => part[0] ?? "")
+    .join("")
+    .toUpperCase();
+}
+
+function positionAccountFallback(popover: HTMLElement, trigger: HTMLElement) {
+  if (typeof CSS !== "undefined" && CSS.supports("position-area", "block-end")) {
+    return;
+  }
+
+  const triggerRect = trigger.getBoundingClientRect();
+  const panelRect = popover.getBoundingClientRect();
+  const margin = 12;
+
+  let left = triggerRect.right - panelRect.width;
+  left = Math.max(margin, Math.min(left, window.innerWidth - panelRect.width - margin));
+
+  let top = triggerRect.bottom + 8;
+  if (top + panelRect.height > window.innerHeight - margin) {
+    const above = triggerRect.top - panelRect.height - 8;
+    if (above >= margin) top = above;
+  }
+
+  popover.style.left = `${Math.round(left)}px`;
+  popover.style.top = `${Math.round(top)}px`;
+}
+
+function NavigationLink({
+  item,
+  active = false,
+  onNavigate,
+}: {
+  item: NavItem;
+  active?: boolean;
+  onNavigate: () => void;
+}) {
   return (
     <Link
       href={item.href}
       aria-current={active ? "page" : undefined}
-      onClick={onClick}
-      className={`relative inline-flex min-h-11 ${wide ? "w-auto rounded-none px-2.5" : "w-full rounded-lg px-3"} items-center whitespace-nowrap text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy ${
-        active
-          ? "font-semibold text-ceda-burgundy after:absolute after:inset-x-2 after:bottom-0 after:h-[3px] after:rounded-full after:bg-ceda-burgundy"
-          : `text-slate-700 hover:bg-surface-muted hover:text-ceda-burgundy ${wide ? "hover:bg-transparent" : ""}`
-      }`}
+      onClick={onNavigate}
+      className="site-nav-link"
     >
-      {item.label}
+      <span>{item.label}</span>
     </Link>
   );
 }
 
-function ActiveNavigationLink({ item, onClick, wide }: { item: (typeof navigation)[number]; onClick: () => void; wide: boolean }) {
+function ActiveNavigationLink({
+  item,
+  onNavigate,
+}: {
+  item: NavItem;
+  onNavigate: () => void;
+}) {
   const pathname = usePathname();
-  return <NavigationLink item={item} active={isCurrentPath(pathname, item.href)} onClick={onClick} wide={wide} />;
+  return (
+    <NavigationLink
+      item={item}
+      active={isCurrentPath(pathname, item.href)}
+      onNavigate={onNavigate}
+    />
+  );
 }
 
 export function Navbar() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [wide, setWide] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const rowRef = useRef<HTMLDivElement>(null);
-  const measureRef = useRef<HTMLDivElement>(null);
-  const profileRef = useRef<HTMLDivElement>(null);
+  const menuId = "primary-site-menu";
+  const accountPanelId = useId();
+  const headerRef = useRef<HTMLElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
+  const accountTriggerRef = useRef<HTMLButtonElement>(null);
+  const accountPopoverRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const lastHeaderWidthRef = useRef(0);
+  const isWideRef = useRef(false);
+
   const { data: session } = authClient.useSession();
   const router = useRouter();
-  const links = session?.user ? [...navigation.slice(0, 1), { label: "Dashboard", href: "/dashboard" }, ...navigation.slice(1)] : navigation;
 
-  useEffect(() => {
-    const row = rowRef.current;
-    const measure = measureRef.current;
-    if (!row || !measure) return;
-    const update = () => {
-      const available = row.clientWidth;
-      const needed = measure.scrollWidth;
-      const nextWide = needed <= available;
-      setWide((current) => current === nextWide ? current : nextWide);
-      if (nextWide) setMobileMenuOpen(false);
+  const links: readonly NavItem[] = session?.user
+    ? [
+        PUBLIC_NAVIGATION[0],
+        { label: "Dashboard", href: "/dashboard" },
+        ...PUBLIC_NAVIGATION.slice(1),
+      ]
+    : PUBLIC_NAVIGATION;
+
+  const hasNativePopover = useCallback(
+    () =>
+      typeof HTMLElement !== "undefined" &&
+      Object.hasOwn(HTMLElement.prototype, "popover"),
+    [],
+  );
+
+  const closeMobileMenu = useCallback(() => {
+    const menu = menuRef.current;
+    if (!menu) return;
+    if (hasNativePopover()) {
+      if (menu.matches(":popover-open")) {
+        menu.hidePopover();
+      }
+    } else {
+      menu.removeAttribute("data-popover-open");
+      setMenuOpen(false);
+    }
+  }, [hasNativePopover]);
+
+  const closeAccountPanel = useCallback(() => {
+    const panel = accountPopoverRef.current;
+    if (!panel) return;
+    if (hasNativePopover()) {
+      if (panel.matches(":popover-open")) {
+        panel.hidePopover();
+      }
+    } else {
+      panel.removeAttribute("data-popover-open");
+      setAccountOpen(false);
+    }
+  }, [hasNativePopover]);
+
+  // Measure the single semantic navigation tree without hardcoded breakpoints.
+  const syncResponsiveLayout = useCallback(
+    (force = false) => {
+      const header = headerRef.current;
+      const inner = innerRef.current;
+      const menu = menuRef.current;
+      if (!header || !inner || !menu) return;
+
+      const currentWidth = header.clientWidth;
+      const previouslyWide = isWideRef.current;
+
+      // Avoid layout thrash: while collapsed, only remeasure when width grows or forced.
+      if (!force && !previouslyWide && currentWidth <= lastHeaderWidthRef.current) {
+        return;
+      }
+      lastHeaderWidthRef.current = currentWidth;
+
+      const nativePopover = hasNativePopover();
+      const wasMenuOpen = nativePopover
+        ? menu.matches(":popover-open")
+        : menu.getAttribute("data-popover-open") === "true";
+
+      let rafId = 0;
+      header.classList.add("is-measuring");
+
+      // Temporarily show inline layout to measure true natural row width.
+      if (nativePopover) {
+        menu.removeAttribute("popover");
+      }
+      header.classList.add("is-wide");
+
+      const fitsInline = inner.scrollWidth <= inner.clientWidth + 1;
+      isWideRef.current = fitsInline;
+
+      if (fitsInline) {
+        menu.removeAttribute("data-popover-open");
+        if (wasMenuOpen) {
+          setMenuOpen(false);
+        }
+      } else {
+        header.classList.remove("is-wide");
+        if (nativePopover) {
+          menu.setAttribute("popover", "auto");
+          if (wasMenuOpen) {
+            try {
+              menu.showPopover();
+            } catch {
+              // Ignore if top-layer promotion is unavailable during teardown.
+            }
+          }
+        } else if (wasMenuOpen) {
+          menu.setAttribute("data-popover-open", "true");
+        }
+      }
+
+      rafId = window.requestAnimationFrame(() => {
+        header.classList.remove("is-measuring");
+      });
+
+      return () => window.cancelAnimationFrame(rafId);
+    },
+    [hasNativePopover],
+  );
+
+  useIsomorphicLayoutEffect(() => {
+    const header = headerRef.current;
+    const menu = menuRef.current;
+    if (!header || !menu) return;
+
+    const cleanupInitial = syncResponsiveLayout(true);
+
+    const observer = new ResizeObserver(() => {
+      syncResponsiveLayout(false);
+    });
+    observer.observe(header);
+    observer.observe(menu);
+
+    const onToggle = (event: Event) => {
+      const toggleEvent = event as ToggleEvent;
+      setMenuOpen(toggleEvent.newState === "open");
     };
-    const observer = new ResizeObserver(update);
-    observer.observe(row);
-    observer.observe(measure);
-    update();
+    menu.addEventListener("toggle", onToggle);
+
+    return () => {
+      cleanupInitial?.();
+      observer.disconnect();
+      menu.removeEventListener("toggle", onToggle);
+    };
+  }, [syncResponsiveLayout]);
+
+  // Re-evaluate layout whenever auth state changes link count or right-side action width.
+  useIsomorphicLayoutEffect(() => {
+    const cleanup = syncResponsiveLayout(true);
+    return () => cleanup?.();
+  }, [session?.user, links.length, syncResponsiveLayout]);
+
+  // Progressive IntersectionObserver fallback for scroll-state sticky styling on browsers without scroll-state queries.
+  useEffect(() => {
+    const header = headerRef.current;
+    const sentinel = sentinelRef.current;
+    if (!header || !sentinel) return;
+    if (typeof CSS !== "undefined" && CSS.supports("container-type", "scroll-state")) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        header.classList.toggle("is-stuck", !entry.isIntersecting);
+      },
+      { threshold: 0 },
+    );
+    observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [session?.user, links.length]);
+  }, []);
 
+  // Account popover toggle + anchor fallback positioning.
   useEffect(() => {
-    if (!mobileMenuOpen) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMobileMenuOpen(false);
-    };
-    document.addEventListener("keydown", closeOnEscape);
-    return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [mobileMenuOpen]);
+    const panel = accountPopoverRef.current;
+    const trigger = accountTriggerRef.current;
+    if (!panel || !trigger) return;
 
-  async function signOut() {
+    const handleToggle = (event: Event) => {
+      const toggleEvent = event as ToggleEvent;
+      const open = toggleEvent.newState === "open";
+      setAccountOpen(open);
+      if (open) {
+        positionAccountFallback(panel, trigger);
+      }
+    };
+
+    panel.addEventListener("toggle", handleToggle);
+    return () => panel.removeEventListener("toggle", handleToggle);
+  }, [session?.user]);
+
+  // Manual Escape + outside-click fallback ONLY when native Popover API is unavailable.
+  useEffect(() => {
+    if (hasNativePopover() || (!menuOpen && !accountOpen)) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeMobileMenu();
+        closeAccountPanel();
+      }
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (
+        target &&
+        !headerRef.current?.contains(target) &&
+        !accountPopoverRef.current?.contains(target)
+      ) {
+        closeMobileMenu();
+        closeAccountPanel();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [menuOpen, accountOpen, hasNativePopover, closeMobileMenu, closeAccountPanel]);
+
+  async function handleSignOut() {
+    closeMobileMenu();
+    closeAccountPanel();
     await authClient.signOut();
-    setMobileMenuOpen(false);
     router.refresh();
   }
 
-  useEffect(() => {
-    if (!profileOpen) return;
-    const onPointerDown = (event: PointerEvent) => { if (!profileRef.current?.contains(event.target as Node)) setProfileOpen(false); };
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") { setProfileOpen(false); profileRef.current?.querySelector<HTMLButtonElement>("button")?.focus(); } };
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => { document.removeEventListener("pointerdown", onPointerDown); document.removeEventListener("keydown", onKeyDown); };
-  }, [profileOpen]);
+  const userName = session?.user?.name || "Portal account";
+  const userEmail = session?.user?.email || "";
+  const initials = getInitials(session?.user?.name, session?.user?.email);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white">
-      <div ref={rowRef} className="relative mx-auto flex min-h-[68px] max-w-[1380px] items-center justify-between gap-2 px-3 sm:min-h-[76px] sm:gap-5 sm:px-6 lg:px-8">
-        <div ref={measureRef} aria-hidden="true" className="pointer-events-none invisible absolute flex w-max items-center gap-5 whitespace-nowrap">
-          <span className="w-36" />
-          <div className="flex items-center gap-1">{links.map((item) => <span key={item.href} className="px-2.5 text-sm">{item.label}</span>)}</div>
-          {session?.user ? <span className="flex items-center gap-2.5 px-1.5"><span className="h-9 w-9 rounded-full" />{session.user.name || session.user.email || "Profile"}<span className="h-4 w-4" /></span> : <span className="px-6">Sign In&nbsp;&nbsp;&nbsp;Register</span>}
+    <>
+      <div
+        ref={sentinelRef}
+        aria-hidden="true"
+        className="pointer-events-none -mb-px h-px w-full"
+      />
+      <header ref={headerRef} className="site-header">
+        <div className="site-header-bar">
+          <div ref={innerRef} className="site-header-inner">
+            <Link
+              href="/"
+              aria-label="CEDA Innovation Portal home"
+              onClick={closeMobileMenu}
+              className="group inline-flex items-center gap-3 rounded-lg py-1 focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-ceda-orange"
+            >
+              <span className="relative block h-11 w-28 sm:w-32">
+                <Image
+                  src="/assets/ceda logo.png"
+                  alt="CEDA — Citizen Entrepreneurial Development Agency"
+                  fill
+                  sizes="(max-width: 640px) 112px, 128px"
+                  className="object-contain object-left"
+                  priority
+                />
+              </span>
+              <span className="hidden text-sm font-semibold tracking-tight text-ceda-ink/85 transition-colors group-hover:text-ceda-burgundy sm:inline">
+                Innovation Portal
+              </span>
+            </Link>
+
+            <nav aria-label="Primary" className="flex items-center">
+              <button
+                type="button"
+                className="site-menu-button"
+                popoverTarget={menuId}
+                popoverTargetAction="toggle"
+                aria-controls={menuId}
+                aria-expanded={menuOpen}
+                onClick={() => {
+                  if (!hasNativePopover() && menuRef.current) {
+                    const nextOpen = !menuOpen;
+                    if (nextOpen) {
+                      menuRef.current.setAttribute("data-popover-open", "true");
+                    } else {
+                      menuRef.current.removeAttribute("data-popover-open");
+                    }
+                    setMenuOpen(nextOpen);
+                  }
+                }}
+              >
+                {menuOpen ? (
+                  <X aria-hidden="true" className="h-4 w-4 text-ceda-burgundy" />
+                ) : (
+                  <Menu aria-hidden="true" className="h-4 w-4 text-ceda-burgundy" />
+                )}
+                <span>{menuOpen ? "Close" : "Menu"}</span>
+              </button>
+
+              <ul
+                ref={menuRef}
+                id={menuId}
+                className="site-menu"
+                popover="auto"
+              >
+                {links.map((item) => (
+                  <li key={item.href}>
+                    <Suspense
+                      fallback={
+                        <NavigationLink item={item} onNavigate={closeMobileMenu} />
+                      }
+                    >
+                      <ActiveNavigationLink
+                        item={item}
+                        onNavigate={closeMobileMenu}
+                      />
+                    </Suspense>
+                  </li>
+                ))}
+
+                {!session?.user ? (
+                  <li className="site-menu-mobile-only mt-2 border-t border-ceda-line pt-2.5">
+                    <div className="grid gap-1.5">
+                      <Link
+                        href="/login"
+                        onClick={closeMobileMenu}
+                        className="flex min-h-11 items-center justify-center rounded-full border border-ceda-line bg-white px-4 text-sm font-semibold text-ceda-ink transition hover:border-ceda-burgundy/40 hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
+                      >
+                        Sign in
+                      </Link>
+                      <Link
+                        href="/signup"
+                        onClick={closeMobileMenu}
+                        className="flex min-h-11 items-center justify-center rounded-full bg-ceda-burgundy px-4 text-sm font-semibold text-white transition hover:bg-ceda-burgundy-dark focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
+                      >
+                        Register
+                      </Link>
+                    </div>
+                  </li>
+                ) : (
+                  <li className="site-menu-mobile-only mt-2 border-t border-ceda-line pt-2.5">
+                    <div className="mb-1.5 rounded-xl bg-ceda-cream px-3 py-2.5">
+                      <p className="truncate text-sm font-semibold text-ceda-ink">
+                        {userName}
+                      </p>
+                      {userEmail ? (
+                        <p className="truncate text-xs text-ceda-muted">
+                          {userEmail}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="grid gap-0.5">
+                      <Link
+                        href="/profile"
+                        onClick={closeMobileMenu}
+                        className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ceda-body transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
+                      >
+                        <UserRound aria-hidden="true" className="h-4 w-4 text-ceda-muted" />
+                        <span>My profile</span>
+                      </Link>
+                      <Link
+                        href="/notifications"
+                        onClick={closeMobileMenu}
+                        className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ceda-body transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
+                      >
+                        <Bell aria-hidden="true" className="h-4 w-4 text-ceda-muted" />
+                        <span>Notifications</span>
+                      </Link>
+                      <Link
+                        href="/account/settings"
+                        onClick={closeMobileMenu}
+                        className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ceda-body transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
+                      >
+                        <Settings aria-hidden="true" className="h-4 w-4 text-ceda-muted" />
+                        <span>Account settings</span>
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={handleSignOut}
+                        className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-semibold text-ceda-burgundy transition hover:bg-ceda-cream focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
+                      >
+                        <LogOut aria-hidden="true" className="h-4 w-4" />
+                        <span>Sign out</span>
+                      </button>
+                    </div>
+                  </li>
+                )}
+              </ul>
+            </nav>
+
+            <div className="site-header-actions">
+              {session?.user ? (
+                <>
+                  <Link
+                    href="/submit"
+                    className="inline-flex min-h-10 items-center justify-center rounded-full border border-ceda-burgundy/25 bg-ceda-cream px-4 text-sm font-semibold text-ceda-burgundy transition hover:border-ceda-burgundy/50 hover:bg-ceda-cream-mid focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
+                  >
+                    Submit an idea
+                  </Link>
+
+                  <button
+                    ref={accountTriggerRef}
+                    type="button"
+                    popoverTarget={accountPanelId}
+                    popoverTargetAction="toggle"
+                    aria-controls={accountPanelId}
+                    aria-expanded={accountOpen}
+                    onClick={() => {
+                      if (!hasNativePopover() && accountPopoverRef.current) {
+                        const nextOpen = !accountOpen;
+                        if (nextOpen) {
+                          accountPopoverRef.current.setAttribute("data-popover-open", "true");
+                          positionAccountFallback(
+                            accountPopoverRef.current,
+                            accountTriggerRef.current!,
+                          );
+                        } else {
+                          accountPopoverRef.current.removeAttribute("data-popover-open");
+                        }
+                        setAccountOpen(nextOpen);
+                      }
+                    }}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-full border border-transparent py-1 pl-1.5 pr-3 text-sm font-medium text-ceda-ink transition hover:border-ceda-line hover:bg-ceda-cream focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-ceda-burgundy text-xs font-bold text-white"
+                    >
+                      {initials}
+                    </span>
+                    <span className="max-w-28 truncate">{session.user.name || "Account"}</span>
+                    <ChevronDown
+                      aria-hidden="true"
+                      className={`h-4 w-4 text-ceda-muted transition-transform duration-150 ${
+                        accountOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  <div
+                    ref={accountPopoverRef}
+                    id={accountPanelId}
+                    popover="auto"
+                    className="site-account-popover"
+                  >
+                    <div className="border-b border-ceda-line px-3 py-2.5">
+                      <p className="truncate text-sm font-semibold text-ceda-ink">
+                        {userName}
+                      </p>
+                      {userEmail ? (
+                        <p className="mt-0.5 truncate text-xs text-ceda-muted">
+                          {userEmail}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="mt-1 grid gap-0.5">
+                      <Link
+                        href="/profile"
+                        onClick={closeAccountPanel}
+                        className="flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ceda-body transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
+                      >
+                        <UserRound aria-hidden="true" className="h-4 w-4 text-ceda-muted" />
+                        <span>My profile</span>
+                      </Link>
+                      <Link
+                        href="/notifications"
+                        onClick={closeAccountPanel}
+                        className="flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ceda-body transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
+                      >
+                        <Bell aria-hidden="true" className="h-4 w-4 text-ceda-muted" />
+                        <span>Notifications</span>
+                      </Link>
+                      <Link
+                        href="/account/settings"
+                        onClick={closeAccountPanel}
+                        className="flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ceda-body transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
+                      >
+                        <Settings aria-hidden="true" className="h-4 w-4 text-ceda-muted" />
+                        <span>Account settings</span>
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={handleSignOut}
+                        className="mt-1 flex min-h-10 w-full items-center gap-3 rounded-xl border-t border-ceda-line px-3 pt-1 text-left text-sm font-semibold text-ceda-burgundy transition hover:bg-ceda-cream focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
+                      >
+                        <LogOut aria-hidden="true" className="h-4 w-4" />
+                        <span>Sign out</span>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="inline-flex min-h-11 items-center rounded-full px-3.5 text-sm font-semibold text-ceda-ink transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-ceda-burgundy px-5 text-sm font-semibold text-white shadow-xs transition hover:bg-ceda-burgundy-dark focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
+                  >
+                    Register
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
         </div>
-        <Link
-          href="/"
-          className="flex shrink-0 items-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ceda-burgundy"
-          aria-label="CEDA Innovation Portal home"
-          onClick={() => setMobileMenuOpen(false)}
-        >
-          <span className="relative block h-12 w-32 sm:w-36">
-            <Image
-              src="/assets/ceda logo.png"
-              alt="CEDA — Citizen Entrepreneurial Development Agency"
-              fill
-              sizes="(max-width: 640px) 128px, 144px"
-              className="object-contain object-left"
-              priority
-            />
-          </span>
-        </Link>
-
-        <nav aria-label="Primary" className="relative flex items-center">
-          {!wide && <button
-            type="button"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-ceda-ink hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy"
-            aria-expanded={mobileMenuOpen}
-            aria-controls="primary-navigation-links"
-            aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
-            onClick={() => setMobileMenuOpen((open) => !open)}
-          >
-            {mobileMenuOpen ? <X aria-hidden="true" className="h-5 w-5" /> : <Menu aria-hidden="true" className="h-5 w-5" />}
-          </button>}
-
-          <ul
-            id="primary-navigation-links"
-            className={wide ? "flex items-center gap-1" : `${mobileMenuOpen ? "fixed inset-x-3 top-[68px] z-50 grid max-h-[calc(100dvh-6rem)] gap-1 overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white p-3 shadow-xl sm:inset-x-6 sm:top-[76px] md:inset-x-8" : "hidden"}`}
-          >
-            {links.map((item) => {
-              const closeMenu = () => setMobileMenuOpen(false);
-
-              return (
-                <li key={item.href}>
-                  <Suspense fallback={<NavigationLink item={item} onClick={closeMenu} wide={wide} />}>
-                    <ActiveNavigationLink item={item} onClick={closeMenu} wide={wide} />
-                  </Suspense>
-                </li>
-              );
-            })}
-            {!session?.user && !wide && <li className="mt-2 border-t border-slate-100 pt-2">
-              <>
-                <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex min-h-11 items-center rounded-lg px-3 text-sm text-slate-700 hover:bg-surface-muted">Sign In</Link>
-                <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="mt-1 flex min-h-11 w-full min-w-0 items-center justify-center rounded-full bg-ceda-burgundy px-5 text-sm font-semibold text-white hover:bg-[#60170E] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy">Register</Link>
-              </>
-            </li>}
-            {session?.user && !wide && <li className="mt-2 border-t border-slate-100 pt-2">
-              <div className="px-3 py-2"><p className="truncate text-sm font-semibold text-ceda-ink">{session.user.name || "Portal account"}</p><p className="truncate text-xs text-ceda-muted">{session.user.email}</p></div>
-              <Link href="/profile" onClick={() => setMobileMenuOpen(false)} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm text-slate-700 hover:bg-surface-muted"><UserRound aria-hidden="true" className="h-4 w-4 text-slate-400" />My profile</Link>
-              <Link href="/notifications" onClick={() => setMobileMenuOpen(false)} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm text-slate-700 hover:bg-surface-muted"><Bell aria-hidden="true" className="h-4 w-4 text-slate-400" />Notifications</Link>
-              <Link href="/account/settings" onClick={() => setMobileMenuOpen(false)} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm text-slate-700 hover:bg-surface-muted"><Settings aria-hidden="true" className="h-4 w-4 text-slate-400" />Account settings</Link>
-              <button type="button" onClick={signOut} className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm text-ceda-burgundy hover:bg-[#FFF9F4]"><LogOut aria-hidden="true" className="h-4 w-4" />Log out</button>
-            </li>}
-          </ul>
-        </nav>
-
-        <div className={`flex shrink-0 items-center gap-2 ${wide ? "" : "hidden"}`}>
-          {session?.user ? <div ref={profileRef} className="relative">
-            <button type="button" aria-expanded={profileOpen} aria-controls="account-profile-panel" onClick={() => setProfileOpen((open) => !open)} className="flex min-h-11 items-center gap-2 rounded-full px-1.5 py-1 text-sm text-slate-700 hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy sm:gap-2.5 sm:pl-2">
-              <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-full bg-ceda-burgundy text-xs font-bold text-white">{(session.user.name || session.user.email || "U").trim().split(/[\s@]+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}</span>
-              <span className="hidden max-w-28 truncate sm:inline">{session.user.name || "Profile"}</span><ChevronDown aria-hidden="true" className="h-4 w-4 text-slate-400" />
-            </button>
-            {profileOpen && <div id="account-profile-panel" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setProfileOpen(false); }} className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
-              <div className="border-b border-slate-100 px-3 py-3"><p className="truncate text-sm font-semibold text-ceda-ink">{session.user.name || "Portal account"}</p><p className="mt-1 truncate text-xs text-ceda-muted">{session.user.email}</p></div>
-              <Link href="/profile" onClick={() => setProfileOpen(false)} className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm text-slate-700 hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-ceda-burgundy"><UserRound aria-hidden="true" className="h-4 w-4 text-slate-400" />My profile</Link>
-              <Link href="/notifications" onClick={() => setProfileOpen(false)} className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm text-slate-700 hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-ceda-burgundy"><Bell aria-hidden="true" className="h-4 w-4 text-slate-400" />Notifications</Link>
-              <Link href="/account/settings" onClick={() => setProfileOpen(false)} className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm text-slate-700 hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-ceda-burgundy"><Settings aria-hidden="true" className="h-4 w-4 text-slate-400" />Account settings</Link>
-              <button type="button" onClick={signOut} className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm text-ceda-burgundy hover:bg-[#FFF9F4] focus-visible:outline-2 focus-visible:outline-ceda-burgundy"><LogOut aria-hidden="true" className="h-4 w-4" />Log out</button>
-            </div>}
-          </div> : <div className="flex items-center gap-4">
-            <Link href="/login" className="rounded px-2 py-2 text-sm text-slate-700 hover:text-ceda-burgundy focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy">Sign In</Link>
-            <Link href="/signup" className="inline-flex min-h-11 items-center justify-center rounded-full bg-ceda-burgundy px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-[#60170E] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy">Register</Link>
-          </div>}
-        </div>
-      </div>
-    </header>
+      </header>
+    </>
   );
 }
