@@ -56,7 +56,10 @@ function getInitials(name?: string | null, email?: string | null) {
 }
 
 function positionAccountFallback(popover: HTMLElement, trigger: HTMLElement) {
-  if (typeof CSS !== "undefined" && CSS.supports("position-area", "block-end")) {
+  if (
+    typeof CSS !== "undefined" &&
+    CSS.supports("position-area", "block-end")
+  ) {
     return;
   }
 
@@ -65,7 +68,10 @@ function positionAccountFallback(popover: HTMLElement, trigger: HTMLElement) {
   const margin = 12;
 
   let left = triggerRect.right - panelRect.width;
-  left = Math.max(margin, Math.min(left, window.innerWidth - panelRect.width - margin));
+  left = Math.max(
+    margin,
+    Math.min(left, window.innerWidth - panelRect.width - margin),
+  );
 
   let top = triggerRect.bottom + 8;
   if (top + panelRect.height > window.innerHeight - margin) {
@@ -91,8 +97,7 @@ function NavigationLink({
       href={item.href}
       aria-current={active ? "page" : undefined}
       onClick={onNavigate}
-      className="site-nav-link"
-    >
+      className="site-nav-link">
       <span>{item.label}</span>
     </Link>
   );
@@ -186,7 +191,11 @@ export function Navbar() {
       const previouslyWide = isWideRef.current;
 
       // Avoid layout thrash: while collapsed, only remeasure when width grows or forced.
-      if (!force && !previouslyWide && currentWidth <= lastHeaderWidthRef.current) {
+      if (
+        !force &&
+        !previouslyWide &&
+        currentWidth <= lastHeaderWidthRef.current
+      ) {
         return;
       }
       lastHeaderWidthRef.current = currentWidth;
@@ -275,7 +284,10 @@ export function Navbar() {
     const header = headerRef.current;
     const sentinel = sentinelRef.current;
     if (!header || !sentinel) return;
-    if (typeof CSS !== "undefined" && CSS.supports("container-type", "scroll-state")) {
+    if (
+      typeof CSS !== "undefined" &&
+      CSS.supports("container-type", "scroll-state")
+    ) {
       return;
     }
 
@@ -336,7 +348,13 @@ export function Navbar() {
       document.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("pointerdown", onPointerDown);
     };
-  }, [menuOpen, accountOpen, hasNativePopover, closeMobileMenu, closeAccountPanel]);
+  }, [
+    menuOpen,
+    accountOpen,
+    hasNativePopover,
+    closeMobileMenu,
+    closeAccountPanel,
+  ]);
 
   async function handleSignOut() {
     closeMobileMenu();
@@ -363,8 +381,7 @@ export function Navbar() {
               href="/"
               aria-label="CEDA Innovation Portal home"
               onClick={closeMobileMenu}
-              className="group inline-flex items-center gap-3 rounded-lg py-1 focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-ceda-orange"
-            >
+              className="group inline-flex items-center gap-3 rounded-lg py-1 focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-ceda-orange">
               <span className="relative block h-11 w-28 sm:w-32">
                 <Image
                   src="/assets/ceda logo.png"
@@ -374,9 +391,6 @@ export function Navbar() {
                   className="object-contain object-left"
                   priority
                 />
-              </span>
-              <span className="hidden text-sm font-semibold tracking-tight text-ceda-ink/85 transition-colors group-hover:text-ceda-burgundy sm:inline">
-                Innovation Portal
               </span>
             </Link>
 
@@ -398,12 +412,17 @@ export function Navbar() {
                     }
                     setMenuOpen(nextOpen);
                   }
-                }}
-              >
+                }}>
                 {menuOpen ? (
-                  <X aria-hidden="true" className="h-4 w-4 text-ceda-burgundy" />
+                  <X
+                    aria-hidden="true"
+                    className="h-4 w-4 text-ceda-burgundy"
+                  />
                 ) : (
-                  <Menu aria-hidden="true" className="h-4 w-4 text-ceda-burgundy" />
+                  <Menu
+                    aria-hidden="true"
+                    className="h-4 w-4 text-ceda-burgundy"
+                  />
                 )}
                 <span>{menuOpen ? "Close" : "Menu"}</span>
               </button>
@@ -412,15 +431,16 @@ export function Navbar() {
                 ref={menuRef}
                 id={menuId}
                 className="site-menu"
-                popover="auto"
-              >
+                popover="auto">
                 {links.map((item) => (
                   <li key={item.href}>
                     <Suspense
                       fallback={
-                        <NavigationLink item={item} onNavigate={closeMobileMenu} />
-                      }
-                    >
+                        <NavigationLink
+                          item={item}
+                          onNavigate={closeMobileMenu}
+                        />
+                      }>
                       <ActiveNavigationLink
                         item={item}
                         onNavigate={closeMobileMenu}
@@ -435,15 +455,13 @@ export function Navbar() {
                       <Link
                         href="/login"
                         onClick={closeMobileMenu}
-                        className="flex min-h-11 items-center justify-center rounded-full border border-ceda-line bg-white px-4 text-sm font-semibold text-ceda-ink transition hover:border-ceda-burgundy/40 hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
-                      >
+                        className="flex min-h-11 items-center justify-center rounded-full border border-ceda-line bg-white px-4 text-sm font-semibold text-ceda-ink transition hover:border-ceda-burgundy/40 hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange">
                         Sign in
                       </Link>
                       <Link
                         href="/signup"
                         onClick={closeMobileMenu}
-                        className="flex min-h-11 items-center justify-center rounded-full bg-ceda-burgundy px-4 text-sm font-semibold text-white transition hover:bg-ceda-burgundy-dark focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
-                      >
+                        className="flex min-h-11 items-center justify-center rounded-full bg-ceda-burgundy px-4 text-sm font-semibold text-white transition hover:bg-ceda-burgundy-dark focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange">
                         Register
                       </Link>
                     </div>
@@ -464,32 +482,37 @@ export function Navbar() {
                       <Link
                         href="/profile"
                         onClick={closeMobileMenu}
-                        className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ceda-body transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
-                      >
-                        <UserRound aria-hidden="true" className="h-4 w-4 text-ceda-muted" />
+                        className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ceda-body transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange">
+                        <UserRound
+                          aria-hidden="true"
+                          className="h-4 w-4 text-ceda-muted"
+                        />
                         <span>My profile</span>
                       </Link>
                       <Link
                         href="/notifications"
                         onClick={closeMobileMenu}
-                        className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ceda-body transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
-                      >
-                        <Bell aria-hidden="true" className="h-4 w-4 text-ceda-muted" />
+                        className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ceda-body transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange">
+                        <Bell
+                          aria-hidden="true"
+                          className="h-4 w-4 text-ceda-muted"
+                        />
                         <span>Notifications</span>
                       </Link>
                       <Link
                         href="/account/settings"
                         onClick={closeMobileMenu}
-                        className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ceda-body transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
-                      >
-                        <Settings aria-hidden="true" className="h-4 w-4 text-ceda-muted" />
+                        className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ceda-body transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange">
+                        <Settings
+                          aria-hidden="true"
+                          className="h-4 w-4 text-ceda-muted"
+                        />
                         <span>Account settings</span>
                       </Link>
                       <button
                         type="button"
                         onClick={handleSignOut}
-                        className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-semibold text-ceda-burgundy transition hover:bg-ceda-cream focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
-                      >
+                        className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-semibold text-ceda-burgundy transition hover:bg-ceda-cream focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange">
                         <LogOut aria-hidden="true" className="h-4 w-4" />
                         <span>Sign out</span>
                       </button>
@@ -504,8 +527,7 @@ export function Navbar() {
                 <>
                   <Link
                     href="/submit"
-                    className="inline-flex min-h-10 items-center justify-center rounded-full border border-ceda-burgundy/25 bg-ceda-cream px-4 text-sm font-semibold text-ceda-burgundy transition hover:border-ceda-burgundy/50 hover:bg-ceda-cream-mid focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
-                  >
+                    className="inline-flex min-h-10 items-center justify-center rounded-full border border-ceda-burgundy/25 bg-ceda-cream px-4 text-sm font-semibold text-ceda-burgundy transition hover:border-ceda-burgundy/50 hover:bg-ceda-cream-mid focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange">
                     Submit an idea
                   </Link>
 
@@ -520,26 +542,31 @@ export function Navbar() {
                       if (!hasNativePopover() && accountPopoverRef.current) {
                         const nextOpen = !accountOpen;
                         if (nextOpen) {
-                          accountPopoverRef.current.setAttribute("data-popover-open", "true");
+                          accountPopoverRef.current.setAttribute(
+                            "data-popover-open",
+                            "true",
+                          );
                           positionAccountFallback(
                             accountPopoverRef.current,
                             accountTriggerRef.current!,
                           );
                         } else {
-                          accountPopoverRef.current.removeAttribute("data-popover-open");
+                          accountPopoverRef.current.removeAttribute(
+                            "data-popover-open",
+                          );
                         }
                         setAccountOpen(nextOpen);
                       }
                     }}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-full border border-transparent py-1 pl-1.5 pr-3 text-sm font-medium text-ceda-ink transition hover:border-ceda-line hover:bg-ceda-cream focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
-                  >
+                    className="inline-flex min-h-11 items-center gap-2 rounded-full border border-transparent py-1 pl-1.5 pr-3 text-sm font-medium text-ceda-ink transition hover:border-ceda-line hover:bg-ceda-cream focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange">
                     <span
                       aria-hidden="true"
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-ceda-burgundy text-xs font-bold text-white"
-                    >
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-ceda-burgundy text-xs font-bold text-white">
                       {initials}
                     </span>
-                    <span className="max-w-28 truncate">{session.user.name || "Account"}</span>
+                    <span className="max-w-28 truncate">
+                      {session.user.name || "Account"}
+                    </span>
                     <ChevronDown
                       aria-hidden="true"
                       className={`h-4 w-4 text-ceda-muted transition-transform duration-150 ${
@@ -552,8 +579,7 @@ export function Navbar() {
                     ref={accountPopoverRef}
                     id={accountPanelId}
                     popover="auto"
-                    className="site-account-popover"
-                  >
+                    className="site-account-popover">
                     <div className="border-b border-ceda-line px-3 py-2.5">
                       <p className="truncate text-sm font-semibold text-ceda-ink">
                         {userName}
@@ -568,32 +594,37 @@ export function Navbar() {
                       <Link
                         href="/profile"
                         onClick={closeAccountPanel}
-                        className="flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ceda-body transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
-                      >
-                        <UserRound aria-hidden="true" className="h-4 w-4 text-ceda-muted" />
+                        className="flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ceda-body transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange">
+                        <UserRound
+                          aria-hidden="true"
+                          className="h-4 w-4 text-ceda-muted"
+                        />
                         <span>My profile</span>
                       </Link>
                       <Link
                         href="/notifications"
                         onClick={closeAccountPanel}
-                        className="flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ceda-body transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
-                      >
-                        <Bell aria-hidden="true" className="h-4 w-4 text-ceda-muted" />
+                        className="flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ceda-body transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange">
+                        <Bell
+                          aria-hidden="true"
+                          className="h-4 w-4 text-ceda-muted"
+                        />
                         <span>Notifications</span>
                       </Link>
                       <Link
                         href="/account/settings"
                         onClick={closeAccountPanel}
-                        className="flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ceda-body transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
-                      >
-                        <Settings aria-hidden="true" className="h-4 w-4 text-ceda-muted" />
+                        className="flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ceda-body transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange">
+                        <Settings
+                          aria-hidden="true"
+                          className="h-4 w-4 text-ceda-muted"
+                        />
                         <span>Account settings</span>
                       </Link>
                       <button
                         type="button"
                         onClick={handleSignOut}
-                        className="mt-1 flex min-h-10 w-full items-center gap-3 rounded-xl border-t border-ceda-line px-3 pt-1 text-left text-sm font-semibold text-ceda-burgundy transition hover:bg-ceda-cream focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
-                      >
+                        className="mt-1 flex min-h-10 w-full items-center gap-3 rounded-xl border-t border-ceda-line px-3 pt-1 text-left text-sm font-semibold text-ceda-burgundy transition hover:bg-ceda-cream focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange">
                         <LogOut aria-hidden="true" className="h-4 w-4" />
                         <span>Sign out</span>
                       </button>
@@ -604,14 +635,12 @@ export function Navbar() {
                 <>
                   <Link
                     href="/login"
-                    className="inline-flex min-h-11 items-center rounded-full px-3.5 text-sm font-semibold text-ceda-ink transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
-                  >
+                    className="inline-flex min-h-11 items-center rounded-full px-3.5 text-sm font-semibold text-ceda-ink transition hover:bg-ceda-cream hover:text-ceda-burgundy focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange">
                     Sign in
                   </Link>
                   <Link
                     href="/signup"
-                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-ceda-burgundy px-5 text-sm font-semibold text-white shadow-xs transition hover:bg-ceda-burgundy-dark focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
-                  >
+                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-ceda-burgundy px-5 text-sm font-semibold text-white shadow-xs transition hover:bg-ceda-burgundy-dark focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange">
                     Register
                   </Link>
                 </>

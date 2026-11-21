@@ -1,7 +1,7 @@
 "use server";
 
 import { eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { faqs } from "@/db/schema";
@@ -21,6 +21,7 @@ function readFields(formData: FormData) {
 }
 
 function refreshFaqPaths() {
+  updateTag("faqs");
   revalidatePath("/admin/content/faqs");
   revalidatePath("/faq");
 }

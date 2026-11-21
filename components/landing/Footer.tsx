@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { FooterArcWatermark } from "@/components/landing/FooterArcWatermark";
 
 const copyrightYear = 2026;
 
@@ -51,26 +52,8 @@ export function Footer() {
         <span className="bg-[#E5A910]" />
       </div>
 
-      {/* Restrained architectural arc watermark clipped to the top-right */}
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 560 320"
-        fill="none"
-        className="pointer-events-none absolute -right-24 -top-12 h-64 w-[28rem] opacity-[0.07] sm:h-80 sm:w-[36rem]"
-      >
-        <path
-          d="M36 286C74 128 214 26 368 42C450 50 516 96 548 168"
-          stroke="#F4B58A"
-          strokeWidth="44"
-          strokeLinecap="round"
-        />
-        <path
-          d="M112 288C164 202 276 154 398 176C456 186 502 216 534 256"
-          stroke="#E8710A"
-          strokeWidth="22"
-          strokeLinecap="round"
-        />
-      </svg>
+      {/* Restrained architectural arc watermark drawn on scroll */}
+      <FooterArcWatermark />
 
       <div className="relative mx-auto max-w-[var(--container-shell)] px-gutter">
         {/* Compact institutional identity & navigation directory */}
