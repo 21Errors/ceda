@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { deleteFaq } from "@/app/(workspace)/(dashboards)/admin/content/faqs/actions";
+import { approveFaqSuggestion, deleteFaq, rejectFaqSuggestion } from "@/app/(workspace)/(dashboards)/admin/content/faqs/actions";
 import { CreateFaqForm, EditFaqForm } from "@/components/admin/FaqAdminForms";
 import { WorkspacePageSkeleton } from "@/components/workspace/WorkspacePageSkeleton";
 import { resolveFaqAdminNotice } from "@/lib/admin-messages";
 import { requireRole } from "@/lib/authorization";
-import { loadAdminFaqs } from "@/lib/server/admin-content";
+import { loadAdminFaqs, loadPendingFaqSuggestions } from "@/lib/server/admin-content";
 
 export default function AdminFaqPage({
   searchParams,
@@ -22,7 +22,7 @@ async function FaqAdminContent({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   await requireRole("admin", "/admin/content/faqs");
-  const [items, query] = await Promise.all([loadAdminFaqs(), searchParams]);
+  const [items, suggestions, query] = await Promise.all([loadAdminFaqs(), loadPendingFaqSuggestions(), searchParams]);
   const notice = resolveFaqAdminNotice(query);
 
   return (
@@ -50,6 +50,19 @@ async function FaqAdminContent({
             {notice}
           </p>
         ) : null}
+
+        {suggestions.length ? <section className="mt-7 space-y-4" aria-labelledby="faq-suggestions-heading">
+          <h2 id="faq-suggestions-heading" className="text-xl font-bold text-ceda-ink">Consultant suggestions awaiting review ({suggestions.length})</h2>
+          {suggestions.map((suggestion) => <article key={suggestion.id} className="rounded-2xl border border-ceda-line bg-[#FFF9F4] p-5">
+            <p className="text-xs text-ceda-muted">Suggested by {suggestion.authorName} ({suggestion.authorEmail})</p>
+            <h3 className="mt-2 font-bold text-ceda-ink">{suggestion.question}</h3>
+            <p className="mt-2 whitespace-pre-line text-sm leading-6 text-ceda-body">{suggestion.answer}</p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <form action={approveFaqSuggestion}><input type="hidden" name="suggestionId" value={suggestion.id} /><button type="submit" className="min-h-11 rounded-full bg-ceda-burgundy px-4 text-sm font-bold text-white">Approve and publish</button></form>
+              <form action={rejectFaqSuggestion}><input type="hidden" name="suggestionId" value={suggestion.id} /><button type="submit" className="min-h-11 rounded-full border border-ceda-line px-4 text-sm font-semibold text-ceda-body">Reject suggestion</button></form>
+            </div>
+          </article>)}
+        </section> : null}
 
         <section
           className="mt-7 rounded-2xl border border-ceda-line bg-white p-5 shadow-sm sm:p-7"

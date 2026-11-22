@@ -75,6 +75,7 @@ async function AdjudicationContent({
                     className="mt-2 text-2xl font-bold text-ceda-ink">
                     {idea.title}
                   </h2>
+                  <p className="mt-2 text-sm text-ceda-body"><span className="font-semibold text-ceda-ink">Applicant:</span> {idea.applicantName}{[idea.applicantJobTitle, idea.applicantOrganisation].filter(Boolean).length ? ` · ${[idea.applicantJobTitle, idea.applicantOrganisation].filter(Boolean).join(" · ")}` : ""}</p>
                   <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-ceda-body">
                     {idea.summary}
                   </p>

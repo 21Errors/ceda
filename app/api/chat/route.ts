@@ -1,6 +1,7 @@
 import { and, count, desc, eq, gt, inArray, isNull } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { searchSupportKnowledge } from "@/lib/server/support-knowledge";
 import { db } from "@/db";
 import { chatConversations, chatMessages, user } from "@/db/schema";
 import { auth } from "@/lib/auth";
@@ -24,6 +25,14 @@ async function getSessionUser() {
 }
 
 export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const knowledgeQuery = url.searchParams.get("knowledge");
+  if (knowledgeQuery !== null) {
+    const query = knowledgeQuery.trim().slice(0, 240);
+    if (query.length < 3) return NextResponse.json({ error: "Enter at least three characters." }, { status: 400 });
+    return NextResponse.json({ results: await searchSupportKnowledge(query) }, { headers: { "Cache-Control": "no-store" } });
+  }
+
   const currentUser = await getSessionUser();
   if (!currentUser) {
     return NextResponse.json(
@@ -32,7 +41,6 @@ export async function GET(request: Request) {
     );
   }
 
-  const url = new URL(request.url);
   const scope = url.searchParams.get("scope");
 
   if (scope === "queue") {

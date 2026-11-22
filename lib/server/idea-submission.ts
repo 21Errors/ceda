@@ -2,6 +2,7 @@ import "server-only";
 
 import { and, asc, desc, eq, gte, isNotNull, isNull, lte, or } from "drizzle-orm";
 import { db } from "@/db";
+import { isProfileNameField } from "@/lib/submission-identity";
 import {
   adjudications,
   categories,
@@ -68,7 +69,7 @@ export async function getOpenSubmissionOptions(requestedCallId?: string) {
       .limit(1),
   ]);
 
-  return { call, fields, categories: categoryOptions, firstStageId: stages[0]?.id ?? null };
+  return { call, fields: fields.filter((field) => !isProfileNameField(field)), categories: categoryOptions, firstStageId: stages[0]?.id ?? null };
 }
 
 export async function getSubmitterIdeas(submitterId: string) {
@@ -237,7 +238,7 @@ export async function getSubmitterAdjudications(ideaId: string, submitterId: str
 }
 
 export async function getSubmissionFields(callId: string) {
-  return db.select({
+  const fields = await db.select({
     key: formFields.key,
     label: formFields.label,
     helpText: formFields.helpText,
@@ -247,6 +248,7 @@ export async function getSubmissionFields(callId: string) {
   }).from(formFields)
     .where(and(eq(formFields.callId, callId), eq(formFields.isActive, true)))
     .orderBy(asc(formFields.position));
+  return fields.filter((field) => !isProfileNameField(field));
 }
 
 export async function getActiveCategories() {

@@ -89,6 +89,7 @@ export const adjudicationDecision = pgEnum("adjudication_decision", [
 export const notificationChannel = pgEnum("notification_channel", ["in_app", "email", "sms"]);
 
 export const chatStatus = pgEnum("chat_status", ["waiting", "active", "closed"]);
+export const faqSuggestionStatus = pgEnum("faq_suggestion_status", ["pending", "approved", "rejected"]);
 
 // =============================================================================
 // 1. ACCESS CONTROL  (roles as rows, so new roles need no migration)
@@ -514,6 +515,17 @@ export const faqs = pgTable("faqs", {
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
+
+export const faqSuggestions = pgTable("faq_suggestions", {
+  id: pk(),
+  question: text().notNull(),
+  answer: text().notNull(),
+  suggestedBy: text().notNull().references(() => user.id, { onDelete: "cascade" }),
+  status: faqSuggestionStatus().default("pending").notNull(),
+  reviewedBy: text().references(() => user.id, { onDelete: "set null" }),
+  reviewedAt: timestamp({ withTimezone: true }),
+  createdAt: createdAt(),
+}, (t) => [index("faq_suggestions_status_created_idx").on(t.status, t.createdAt)]);
 
 export const contentBlocks = pgTable("content_blocks", {
   id: pk(),

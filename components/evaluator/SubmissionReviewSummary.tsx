@@ -71,6 +71,9 @@ interface SubmissionReviewSummaryProps {
   title: string;
   summary: string;
   categoryName: string | null;
+  applicantName: string;
+  applicantOrganisation: string | null;
+  applicantJobTitle: string | null;
   versionNo: number;
   answers: Record<string, unknown>;
   submissionFields: ReviewSubmissionField[];
@@ -83,6 +86,9 @@ export function SubmissionReviewSummary({
   title,
   summary,
   categoryName,
+  applicantName,
+  applicantOrganisation,
+  applicantJobTitle,
   versionNo,
   answers,
   submissionFields,
@@ -104,6 +110,7 @@ export function SubmissionReviewSummary({
       {categoryName ? (
         <p className="mt-1 text-sm font-semibold text-ceda-muted">{categoryName}</p>
       ) : null}
+      <p className="mt-3 text-sm text-ceda-body"><span className="font-semibold text-ceda-ink">Applicant:</span> {applicantName}{[applicantJobTitle, applicantOrganisation].filter(Boolean).length ? ` · ${[applicantJobTitle, applicantOrganisation].filter(Boolean).join(" · ")}` : ""}</p>
       <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-ceda-body">
         {summary}
       </p>

@@ -144,6 +144,13 @@ const ALL_NAV_GROUPS: readonly WorkspaceNavGroup[] = [
         icon: "consultant",
         roles: ["consultant"],
       },
+      {
+        id: "consultant-knowledge",
+        label: "Answer suggestions",
+        href: "/consultant/knowledge",
+        icon: "faqs",
+        roles: ["consultant"],
+      },
     ],
   },
   {

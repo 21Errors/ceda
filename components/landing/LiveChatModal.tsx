@@ -22,6 +22,7 @@ import {
   type ChatMessageFormValues,
 } from "@/lib/form-schemas";
 import { zodResolver } from "@/lib/zod-resolver";
+import { SupportKnowledgeSearch } from "@/components/landing/SupportKnowledgeSearch";
 
 type Message = {
   id: string;
@@ -60,6 +61,7 @@ function LiveChatWindow({ onClose }: Pick<LiveChatModalProps, "onClose">) {
   const [signedOut, setSignedOut] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [messageNotice, setMessageNotice] = useState("");
 
   const {
     register,
@@ -169,6 +171,15 @@ function LiveChatWindow({ onClose }: Pick<LiveChatModalProps, "onClose">) {
       return;
     }
     reset();
+    if (chat.availability?.status === "public_holiday") {
+      setMessageNotice(`Your message is in the queue. The service desk is closed for ${chat.availability.holidayName ?? "a public holiday"}; a consultant will reply on the next working day (${chat.availability.hoursLabel}).`);
+    } else if (chat.availability?.status === "offline_hours") {
+      setMessageNotice(`Your message is in the queue. No consultants are online right now; the team will reply during the next working day (${chat.availability.hoursLabel}).`);
+    } else if (chat.availability?.allAgentsBusy) {
+      setMessageNotice("Your message is in the queue. All consultants are helping other applicants; the next available consultant will join this chat.");
+    } else {
+      setMessageNotice("Your message was sent. A CEDA consultant will reply in this chat.");
+    }
     await refresh();
   }
 
@@ -264,6 +275,12 @@ function LiveChatWindow({ onClose }: Pick<LiveChatModalProps, "onClose">) {
           </div>
         )}
 
+        {messageNotice && !signedOut && (
+          <p role="status" className="border-b border-[#7A1F14]/15 bg-white px-4 py-2.5 text-xs leading-5 text-[#37231A]">
+            {messageNotice}
+          </p>
+        )}
+
         {signedOut ? (
           <div className="flex flex-1 flex-col items-center justify-center px-7 text-center">
             <MessageSquare className="h-9 w-9 text-ceda-burgundy" />
@@ -284,6 +301,9 @@ function LiveChatWindow({ onClose }: Pick<LiveChatModalProps, "onClose">) {
               className="mt-3 text-sm font-semibold text-ceda-burgundy underline underline-offset-4">
               Create an account
             </Link>
+            <div className="mt-5 w-full">
+              <SupportKnowledgeSearch />
+            </div>
           </div>
         ) : (
           <>
@@ -304,6 +324,9 @@ function LiveChatWindow({ onClose }: Pick<LiveChatModalProps, "onClose">) {
                         ? "Start a live conversation with a CEDA service consultant."
                         : "Start a conversation with the CEDA team. Your message will be queued for the next working day."}
                   </p>
+                  <div className="mt-4 w-full">
+                    <SupportKnowledgeSearch onHandoff={startConversation} />
+                  </div>
                   <button
                     type="button"
                     onClick={startConversation}

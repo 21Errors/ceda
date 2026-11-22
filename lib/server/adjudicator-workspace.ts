@@ -2,7 +2,7 @@ import "server-only";
 
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { evaluatorAssignments, evaluations, ideaVersions, ideas, innovationCalls, user, workflowStages } from "@/db/schema";
+import { evaluatorAssignments, evaluations, ideaVersions, ideas, innovationCalls, user, userProfiles, workflowStages } from "@/db/schema";
 import { getAttachmentsByVersionIds } from "@/lib/server/attachments";
 import { findSimilarIdeasMap } from "@/lib/server/idea-similarity";
 
@@ -12,6 +12,9 @@ export async function getAdjudicationQueue() {
     referenceNo: ideas.referenceNo,
     status: ideas.status,
     submitterId: ideas.submitterId,
+    applicantName: user.name,
+    applicantOrganisation: userProfiles.organisation,
+    applicantJobTitle: userProfiles.jobTitle,
     callId: ideas.callId,
     versionId: ideaVersions.id,
     title: ideaVersions.title,
@@ -23,6 +26,8 @@ export async function getAdjudicationQueue() {
     .from(ideas)
     .innerJoin(ideaVersions, eq(ideas.currentVersionId, ideaVersions.id))
     .innerJoin(innovationCalls, eq(ideas.callId, innovationCalls.id))
+    .innerJoin(user, eq(ideas.submitterId, user.id))
+    .leftJoin(userProfiles, eq(ideas.submitterId, userProfiles.userId))
     .innerJoin(workflowStages, eq(ideas.currentStageId, workflowStages.id))
     .where(and(eq(workflowStages.type, "adjudication"), inArray(ideas.status, ["in_review", "changes_requested"])))
     .orderBy(desc(ideas.updatedAt));

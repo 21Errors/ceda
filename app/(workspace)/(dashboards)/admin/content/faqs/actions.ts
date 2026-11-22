@@ -1,10 +1,10 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { faqs } from "@/db/schema";
+import { faqs, faqSuggestions } from "@/db/schema";
 import { requireRole } from "@/lib/authorization";
 import { writeAudit } from "@/lib/server/audit";
 
@@ -70,5 +70,39 @@ export async function deleteFaq(formData: FormData) {
   if (!deleted) redirect("/admin/content/faqs?error=notfound");
   refreshFaqPaths();
   redirect("/admin/content/faqs?notice=deleted");
+}
+
+export async function approveFaqSuggestion(formData: FormData) {
+  const admin = await requireRole("admin", "/admin/content/faqs");
+  const id = String(formData.get("suggestionId") ?? "");
+  if (!uuidPattern.test(id)) redirect("/admin/content/faqs?error=invalid");
+  const approved = await db.transaction(async (tx) => {
+    const [suggestion] = await tx.select().from(faqSuggestions).where(eq(faqSuggestions.id, id)).limit(1);
+    if (!suggestion || suggestion.status !== "pending") return false;
+    const [faq] = await tx.insert(faqs).values({ question: suggestion.question, answer: suggestion.answer, topic: "Applicant Support", position: 0, isPublished: true }).returning({ id: faqs.id });
+    if (!faq) return false;
+    await tx.update(faqSuggestions).set({ status: "approved", reviewedBy: admin.id, reviewedAt: new Date() }).where(eq(faqSuggestions.id, id));
+    await writeAudit(tx, { actorId: admin.id, action: "faq.suggestion_approved", entityType: "faq_suggestion", entityId: id, metadata: { faqId: faq.id } });
+    return true;
+  });
+  if (!approved) redirect("/admin/content/faqs?error=notfound");
+  refreshFaqPaths();
+  redirect("/admin/content/faqs?notice=suggestion-approved");
+}
+
+export async function rejectFaqSuggestion(formData: FormData) {
+  const admin = await requireRole("admin", "/admin/content/faqs");
+  const id = String(formData.get("suggestionId") ?? "");
+  if (!uuidPattern.test(id)) redirect("/admin/content/faqs?error=invalid");
+  const rejected = await db.transaction(async (tx) => {
+    const [row] = await tx.update(faqSuggestions).set({ status: "rejected", reviewedBy: admin.id, reviewedAt: new Date() })
+      .where(and(eq(faqSuggestions.id, id), eq(faqSuggestions.status, "pending"))).returning({ id: faqSuggestions.id });
+    if (!row) return false;
+    await writeAudit(tx, { actorId: admin.id, action: "faq.suggestion_rejected", entityType: "faq_suggestion", entityId: id });
+    return true;
+  });
+  if (!rejected) redirect("/admin/content/faqs?error=notfound");
+  revalidatePath("/admin/content/faqs");
+  redirect("/admin/content/faqs?notice=suggestion-rejected");
 }
 

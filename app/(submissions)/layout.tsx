@@ -3,8 +3,14 @@ import type { ReactNode } from "react";
 import { ShieldCheck } from "lucide-react";
 import { GlobalSupportActions } from "@/components/GlobalSupportActions";
 import { SubmissionStudioHeader } from "@/components/submissions/SubmissionStudioHeader";
+import { WorkspaceLayoutFrame } from "@/components/workspace/WorkspaceLayoutFrame";
+import { getCurrentSession, getUserRoles } from "@/lib/authorization";
 
-export default function SubmissionsLayout({ children }: { children: ReactNode }) {
+export default async function SubmissionsLayout({ children }: { children: ReactNode }) {
+  const session = await getCurrentSession();
+  const roles = session?.user ? await getUserRoles(session.user.id) : [];
+  if (roles.includes("submitter")) return <WorkspaceLayoutFrame>{children}</WorkspaceLayoutFrame>;
+
   return (
     <div className="flex min-h-screen flex-col bg-[#F7F8F9]">
       <SubmissionStudioHeader />

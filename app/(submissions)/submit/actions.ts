@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { and, asc, count, eq, gte, isNull, lte, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
+import { isProfileNameField } from "@/lib/submission-identity";
 import { attachments, categories, formFields, ideaStageHistory, ideaSubscriptions, ideaVersions, ideas, innovationCalls, workflowStages } from "@/db/schema";
 import { requireRole } from "@/lib/authorization";
 import { writeAudit } from "@/lib/server/audit";
@@ -81,10 +82,9 @@ export async function saveSubmissionDraft(formData: FormData): Promise<Submissio
     idea = { id: ideaId, callId: call.id, referenceNo, currentVersionId: versionId };
   }
 
-  const [definitions] = await Promise.all([
-    db.select({ key: formFields.key, type: formFields.type }).from(formFields)
-      .where(and(eq(formFields.callId, idea.callId), eq(formFields.isActive, true))),
-  ]);
+  const definitions = (await db.select({ key: formFields.key, label: formFields.label, type: formFields.type }).from(formFields)
+    .where(and(eq(formFields.callId, idea.callId), eq(formFields.isActive, true))))
+    .filter((field) => !isProfileNameField(field));
   const title = readText(formData, "title").slice(0, 255) || "Untitled submission";
   const summary = readText(formData, "summary").slice(0, 5000);
   const categoryId = readText(formData, "categoryId");
@@ -118,12 +118,13 @@ export async function submitIdeaAction(formData: FormData): Promise<SubmissionSt
   if (!idea?.currentVersionId || idea.callId !== callId) return { error: "This draft is unavailable. Return to your dashboard and reopen it." };
   const call = await getOpenCall(idea.callId);
   if (!call) return { error: "This opportunity has closed. Contact CEDA if you need help with your draft." };
-  const [fieldDefinitions, stageRows, categoryRows] = await Promise.all([
+  const [allFieldDefinitions, stageRows, categoryRows] = await Promise.all([
     db.select({ key: formFields.key, label: formFields.label, type: formFields.type, required: formFields.required, options: formFields.options })
       .from(formFields).where(and(eq(formFields.callId, call.id), eq(formFields.isActive, true))).orderBy(asc(formFields.position)),
     db.select({ id: workflowStages.id }).from(workflowStages).where(and(eq(workflowStages.callId, call.id), eq(workflowStages.type, "evaluation"))).orderBy(asc(workflowStages.position)).limit(1),
     uuidPattern.test(categoryId) ? db.select({ id: categories.id }).from(categories).where(and(eq(categories.id, categoryId), eq(categories.isActive, true))).limit(1) : Promise.resolve([]),
   ]);
+  const fieldDefinitions = allFieldDefinitions.filter((field) => !isProfileNameField(field));
   if (!stageRows[0]) return { error: "This opportunity has no evaluation stage configured. Contact CEDA for help." };
   if (!categoryRows[0]) fieldErrors.categoryId = "Choose a valid category.";
   const { answers: validatedAnswers, fieldErrors: answerErrors } = validateDynamicAnswers(formData, fieldDefinitions);

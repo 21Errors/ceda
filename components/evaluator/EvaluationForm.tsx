@@ -42,6 +42,9 @@ type Props = {
   title: string;
   summary: string;
   categoryName: string | null;
+  applicantName: string;
+  applicantOrganisation: string | null;
+  applicantJobTitle: string | null;
   versionNo: number;
   answers: Record<string, unknown>;
   submissionFields: ReviewSubmissionField[];
@@ -62,6 +65,9 @@ export function EvaluationForm({
   title,
   summary,
   categoryName,
+  applicantName,
+  applicantOrganisation,
+  applicantJobTitle,
   versionNo,
   answers,
   submissionFields,
@@ -136,6 +142,9 @@ export function EvaluationForm({
         title={title}
         summary={summary}
         categoryName={categoryName}
+        applicantName={applicantName}
+        applicantOrganisation={applicantOrganisation}
+        applicantJobTitle={applicantJobTitle}
         versionNo={versionNo}
         answers={answers}
         submissionFields={submissionFields}

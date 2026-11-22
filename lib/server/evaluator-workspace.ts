@@ -2,8 +2,16 @@ import "server-only";
 
 import { and, asc, desc, eq, inArray, isNotNull, ne, or } from "drizzle-orm";
 import { db } from "@/db";
-import { attachments, categories, criteria, evaluations, evaluatorAssignments, feedback, formFields, ideaVersions, ideas, innovationCalls, user, workflowStages } from "@/db/schema";
+import { attachments, categories, criteria, evaluations, evaluatorAssignments, feedback, formFields, ideaVersions, ideas, innovationCalls, user, userProfiles, workflowStages } from "@/db/schema";
 import { findSimilarIdeasForReview } from "@/lib/server/idea-similarity";
+import { writeAudit } from "@/lib/server/audit";
+
+const DEFAULT_SCORING_CRITERIA = [
+  "Solution fit",
+  "Security and privacy",
+  "User experience",
+  "Scalability and delivery",
+] as const;
 
 export async function getAvailableEvaluatorIdeas(evaluatorId: string) {
   const submissions = await db.select({
@@ -93,6 +101,9 @@ export async function getEvaluatorAssignment(assignmentId: string, evaluatorId: 
     categoryName: categories.name,
     callId: innovationCalls.id,
     callTitle: innovationCalls.title,
+    applicantName: user.name,
+    applicantOrganisation: userProfiles.organisation,
+    applicantJobTitle: userProfiles.jobTitle,
     stageId: workflowStages.id,
     stageName: workflowStages.name,
   })
@@ -100,6 +111,8 @@ export async function getEvaluatorAssignment(assignmentId: string, evaluatorId: 
     .innerJoin(ideas, eq(evaluatorAssignments.ideaId, ideas.id))
     .innerJoin(ideaVersions, eq(ideas.currentVersionId, ideaVersions.id))
     .innerJoin(innovationCalls, eq(ideas.callId, innovationCalls.id))
+    .innerJoin(user, eq(ideas.submitterId, user.id))
+    .leftJoin(userProfiles, eq(ideas.submitterId, userProfiles.userId))
     .leftJoin(categories, eq(ideas.categoryId, categories.id))
     .innerJoin(workflowStages, eq(evaluatorAssignments.stageId, workflowStages.id))
     .where(and(
@@ -112,6 +125,31 @@ export async function getEvaluatorAssignment(assignmentId: string, evaluatorId: 
     ))
     .limit(1);
   if (!assignment) return null;
+
+  const existingCriteria = await db.select({ id: criteria.id })
+    .from(criteria).where(eq(criteria.stageId, assignment.stageId)).limit(1);
+  if (!existingCriteria.length) {
+    await db.transaction(async (tx) => {
+      const concurrentCriteria = await tx.select({ id: criteria.id })
+        .from(criteria).where(eq(criteria.stageId, assignment.stageId)).limit(1);
+      if (concurrentCriteria.length) return;
+      await tx.insert(criteria).values(DEFAULT_SCORING_CRITERIA.map((name, position) => ({
+        stageId: assignment.stageId,
+        name,
+        description: `Score the proposal's ${name.toLowerCase()}.`,
+        maxScore: 10,
+        weight: "1.00",
+        position,
+      })));
+      await writeAudit(tx, {
+        actorId: evaluatorId,
+        action: "evaluation.criteria_defaults_created",
+        entityType: "workflow_stage",
+        entityId: assignment.stageId,
+        metadata: { criteria: [...DEFAULT_SCORING_CRITERIA] },
+      });
+    });
+  }
 
   const scoringCriteria = await db.select({
     id: criteria.id,

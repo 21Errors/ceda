@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
+import { isProfileNameField } from "@/lib/submission-identity";
 import { attachments, categories, evaluatorAssignments, feedback, formFields, ideaStageHistory, ideas, ideaVersions, workflowStages } from "@/db/schema";
 import { MAX_ATTACHMENTS_PER_VERSION } from "@/lib/attachments";
 import { requireRole } from "@/lib/authorization";
@@ -44,7 +45,7 @@ export async function resubmitIdeaAction(_previous: SubmissionState, formData: F
   if (summary.length < 30 || summary.length > 5000) fieldErrors.summary = "Use between 30 and 5,000 characters.";
   if (responseText.length < 20 || responseText.length > 5000) fieldErrors.response = "Explain how you addressed the feedback (20–5,000 characters).";
 
-  const [fieldDefinitions, stageRows, categoryRows, lastVersion, currentAttachments] = await Promise.all([
+  const [allFieldDefinitions, stageRows, categoryRows, lastVersion, currentAttachments] = await Promise.all([
     db.select({ key: formFields.key, label: formFields.label, type: formFields.type, required: formFields.required, options: formFields.options })
       .from(formFields).where(and(eq(formFields.callId, idea.callId), eq(formFields.isActive, true))).orderBy(asc(formFields.position)),
     db.select({ id: workflowStages.id, name: workflowStages.name }).from(workflowStages)
@@ -64,6 +65,7 @@ export async function resubmitIdeaAction(_previous: SubmissionState, formData: F
         }).from(attachments).where(eq(attachments.ideaVersionId, idea.currentVersionId))
       : Promise.resolve([]),
   ]);
+  const fieldDefinitions = allFieldDefinitions.filter((field) => !isProfileNameField(field));
   if (!stageRows[0]) return { error: "This opportunity has no evaluation stage configured. Contact CEDA for help." };
   if (!categoryRows[0]) fieldErrors.categoryId = "Choose a valid category.";
   const { answers, fieldErrors: answerErrors } = validateDynamicAnswers(formData, fieldDefinitions);
