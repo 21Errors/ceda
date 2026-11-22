@@ -21,6 +21,7 @@ type DraftUploaderProps = {
   ensureDraftId: () => Promise<string | null>;
   initialAttachments: AttachmentSummary[];
   onUploadingChange?: (uploading: boolean) => void;
+  onCountChange?: (count: number) => void;
 };
 
 type ResubmissionUploaderProps = {
@@ -131,7 +132,11 @@ export function AttachmentUploader(props: Props) {
         }
 
         if (props.mode === "draft" && data.attachment) {
-          setDraftItems((prev) => [...prev, data.attachment!]);
+          setDraftItems((prev) => {
+            const next = [...prev, data.attachment!];
+            props.onCountChange?.(next.length);
+            return next;
+          });
           uploadedNames.push(data.attachment.fileName);
         } else if (props.mode === "resubmission" && data.stagedAttachment) {
           setStagedItems((prev) => [...prev, data.stagedAttachment!]);
@@ -169,7 +174,11 @@ export function AttachmentUploader(props: Props) {
         setError(data.error ?? `Could not remove ${item.fileName}.`);
         return;
       }
-      setDraftItems((prev) => prev.filter((entry) => entry.id !== item.id));
+      setDraftItems((prev) => {
+        const next = prev.filter((entry) => entry.id !== item.id);
+        if (props.mode === "draft") props.onCountChange?.(next.length);
+        return next;
+      });
       setStatusMessage(`Removed ${item.fileName}.`);
     } catch {
       setError(`Network error while removing ${item.fileName}.`);

@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, useTransition } from "react";
-import { useForm, type Path, type UseFormRegister } from "react-hook-form";
+import { useForm, useWatch, type Path, type UseFormRegister } from "react-hook-form";
 import { Check, ChevronLeft, ChevronRight, CircleCheck, FileText, Save } from "lucide-react";
 import { saveSubmissionDraft, submitIdeaAction, type SubmissionState } from "@/app/(submissions)/submit/actions";
 import { AttachmentUploader } from "@/components/submit/AttachmentUploader";
+import { ReadinessChecker } from "@/components/submit/ReadinessChecker";
 import { FieldErrorMessage, FormErrorAnnouncer } from "@/components/ui/FormErrorFeedback";
 import type { AttachmentSummary } from "@/lib/attachments";
+import { evaluateIdeaReadiness } from "@/lib/idea-readiness";
 import {
   createSubmissionSchema,
   type SubmissionFormValues,
@@ -256,6 +258,9 @@ export function SubmissionForm({
   const [active, setActive] = useState(0);
   const [draftId, setDraftId] = useState(initialDraft?.id ?? "");
   const [uploadingAttachments, setUploadingAttachments] = useState(false);
+  const [attachmentCount, setAttachmentCount] = useState(
+    initialAttachments.length,
+  );
   const [savedMessage, setSavedMessage] = useState("");
   const [state, setState] = useState<SubmissionState>({});
   const [pending, startTransition] = useTransition();
@@ -264,6 +269,7 @@ export function SubmissionForm({
   const schema = useMemo(() => createSubmissionSchema(fields), [fields]);
 
   const {
+    control,
     register,
     trigger,
     getValues,
@@ -291,6 +297,23 @@ export function SubmissionForm({
       answers: buildDefaultAnswers(fields, answerValues),
     },
   });
+
+  const watchedValues = useWatch({ control });
+  const readiness = useMemo(
+    () =>
+      evaluateIdeaReadiness({
+        title: watchedValues.title ?? "",
+        summary: watchedValues.summary ?? "",
+        categoryId: watchedValues.categoryId ?? "",
+        solutionStatus: watchedValues.solutionStatus ?? "",
+        innovationTypes: watchedValues.innovationTypes ?? [],
+        termsAccepted: Boolean(watchedValues.termsAccepted),
+        answers: watchedValues.answers ?? {},
+        fields,
+        attachmentCount,
+      }),
+    [watchedValues, fields, attachmentCount],
+  );
 
   function buildFormData(values: SubmissionFormValues): FormData {
     const formData = new FormData();
@@ -823,6 +846,7 @@ export function SubmissionForm({
                       ensureDraftId={ensureDraftId}
                       initialAttachments={initialAttachments}
                       onUploadingChange={setUploadingAttachments}
+                      onCountChange={setAttachmentCount}
                     />
                     {fields
                       .filter((field) => field.sectionKey === "solution_documents")
@@ -837,6 +861,11 @@ export function SubmissionForm({
                           }
                         />
                       ))}
+                    <ReadinessChecker
+                      readiness={readiness}
+                      onJumpToSection={goToSection}
+                      variant="full"
+                    />
                   </>
                 ) : null}
               </div>
@@ -945,6 +974,11 @@ export function SubmissionForm({
             {active + 1} of {sections.length}
           </progress>
         </div>
+        <ReadinessChecker
+          readiness={readiness}
+          onJumpToSection={goToSection}
+          variant="sidebar"
+        />
       </aside>
     </div>
   );

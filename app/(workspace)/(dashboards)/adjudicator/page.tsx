@@ -7,6 +7,7 @@ import {
   getAttachmentTypeLabel,
 } from "@/lib/attachments";
 import { AdjudicationDecisionForm } from "@/components/adjudicator/AdjudicationDecisionForm";
+import { SimilarIdeasAlert } from "@/components/review/SimilarIdeasAlert";
 import { requireRole } from "@/lib/authorization";
 import { getAdjudicationQueue } from "@/lib/server/adjudicator-workspace";
 
@@ -78,6 +79,9 @@ async function AdjudicationContent({
                     {idea.summary}
                   </p>
                 </header>
+                <div className="mt-4">
+                  <SimilarIdeasAlert matches={idea.similarIdeas} compact />
+                </div>
                 {idea.reviews.length > 0 ? (
                   <section className="mt-5" aria-label="Evaluator reviews">
                     <h3 className="font-bold text-ceda-ink">

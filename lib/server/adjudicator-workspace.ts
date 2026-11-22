@@ -4,6 +4,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { evaluatorAssignments, evaluations, ideaVersions, ideas, innovationCalls, user, workflowStages } from "@/db/schema";
 import { getAttachmentsByVersionIds } from "@/lib/server/attachments";
+import { findSimilarIdeasMap } from "@/lib/server/idea-similarity";
 
 export async function getAdjudicationQueue() {
   const submissions = await db.select({
@@ -27,7 +28,8 @@ export async function getAdjudicationQueue() {
     .orderBy(desc(ideas.updatedAt));
 
   const versionIds = submissions.map((submission) => submission.versionId);
-  const [reviews, attachmentsByVersion] = await Promise.all([
+  const ideaIds = submissions.map((submission) => submission.id);
+  const [reviews, attachmentsByVersion, similarByIdea] = await Promise.all([
     versionIds.length
       ? db.select({
           versionId: evaluations.ideaVersionId,
@@ -43,6 +45,7 @@ export async function getAdjudicationQueue() {
           .where(inArray(evaluations.ideaVersionId, versionIds))
       : Promise.resolve([]),
     getAttachmentsByVersionIds(versionIds),
+    findSimilarIdeasMap(ideaIds),
   ]);
   const reviewsByVersion = new Map<string, typeof reviews>();
   for (const review of reviews) reviewsByVersion.set(review.versionId, [...(reviewsByVersion.get(review.versionId) ?? []), review]);
@@ -50,5 +53,6 @@ export async function getAdjudicationQueue() {
     ...submission,
     reviews: reviewsByVersion.get(submission.versionId) ?? [],
     attachments: attachmentsByVersion.get(submission.versionId) ?? [],
+    similarIdeas: similarByIdea.get(submission.id) ?? [],
   }));
 }

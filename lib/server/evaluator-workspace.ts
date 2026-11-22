@@ -3,6 +3,7 @@ import "server-only";
 import { and, asc, desc, eq, inArray, isNotNull, ne, or } from "drizzle-orm";
 import { db } from "@/db";
 import { attachments, categories, criteria, evaluations, evaluatorAssignments, feedback, formFields, ideaVersions, ideas, innovationCalls, user, workflowStages } from "@/db/schema";
+import { findSimilarIdeasForReview } from "@/lib/server/idea-similarity";
 
 export async function getAvailableEvaluatorIdeas(evaluatorId: string) {
   const submissions = await db.select({
@@ -134,12 +135,13 @@ export async function getEvaluatorAssignment(assignmentId: string, evaluatorId: 
     ))
     .orderBy(asc(feedback.createdAt));
 
-  const [submissionFields, submissionAttachments] = await Promise.all([
+  const [submissionFields, submissionAttachments, similarIdeas] = await Promise.all([
     db.select({ key: formFields.key, label: formFields.label, helpText: formFields.helpText, sectionKey: formFields.sectionKey, position: formFields.position })
       .from(formFields).where(eq(formFields.callId, assignment.callId)).orderBy(asc(formFields.sectionPosition), asc(formFields.position)),
     db.select({ id: attachments.id, fileName: attachments.fileName, mimeType: attachments.mimeType, fileSize: attachments.fileSize })
       .from(attachments).where(eq(attachments.ideaVersionId, assignment.currentVersionId)).orderBy(asc(attachments.createdAt)),
+    findSimilarIdeasForReview(assignment.ideaId),
   ]);
 
-  return { assignment, criteria: scoringCriteria, internalNotes, submissionFields, submissionAttachments };
+  return { assignment, criteria: scoringCriteria, internalNotes, submissionFields, submissionAttachments, similarIdeas };
 }
