@@ -2,32 +2,22 @@
 
 import Link from "next/link";
 import { startTransition, useActionState, useMemo, useState } from "react";
-import { useForm, type Path } from "react-hook-form";
-import { Download } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { resubmitIdeaAction } from "@/app/(workspace)/(dashboards)/dashboard/submissions/actions";
 import type { SubmissionState } from "@/app/(submissions)/submit/actions";
-import { AttachmentUploader } from "@/components/submit/AttachmentUploader";
 import { FieldErrorMessage, FormErrorAnnouncer } from "@/components/ui/FormErrorFeedback";
-import {
-  formatFileSize,
-  getAttachmentDownloadPath,
-  getAttachmentTypeLabel,
-  type AttachmentSummary,
-} from "@/lib/attachments";
+import type { AttachmentSummary } from "@/lib/attachments";
 import {
   createResubmissionSchema,
   type ResubmissionFormValues,
 } from "@/lib/form-schemas";
 import { zodResolver } from "@/lib/zod-resolver";
-
-type Field = {
-  key: string;
-  label: string;
-  helpText: string | null;
-  type: "text" | "textarea" | "number" | "select" | "multiselect" | "checkbox" | "date" | "url";
-  required: boolean;
-  options: string[] | null;
-};
+import { ResubmissionAttachmentsSection } from "./ResubmissionAttachmentsSection";
+import {
+  RESUBMISSION_FIELD_CLASS,
+  ResubmissionFieldControl,
+  type ResubmissionField,
+} from "./ResubmissionFieldControl";
 
 type Props = {
   ideaId: string;
@@ -35,16 +25,17 @@ type Props = {
   summary: string;
   answers: Record<string, unknown>;
   categoryId: string | null;
-  fields: Field[];
+  fields: ResubmissionField[];
   categories: { id: string; name: string }[];
   existingAttachments: AttachmentSummary[];
 };
 
 const initialState: SubmissionState = {};
-const fieldClass =
-  "ds-field-control mt-1 block min-h-11 w-full rounded-xl border border-[#9A8175] bg-white px-3.5 py-2.5 text-base text-ceda-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ceda-burgundy";
 
-function buildDefaultAnswers(fields: Field[], answers: Record<string, unknown>) {
+function buildDefaultAnswers(
+  fields: ResubmissionField[],
+  answers: Record<string, unknown>,
+) {
   const defaults: Record<string, string | boolean | string[]> = {};
   for (const field of fields) {
     const value = answers[field.key];
@@ -134,7 +125,6 @@ export function ResubmissionForm({
       formData.append("keepAttachmentId", id);
     }
 
-    // Preserve any hidden attachment inputs rendered by AttachmentUploader.
     if (formElement) {
       const domData = new FormData(formElement);
       for (const [key, val] of domData.entries()) {
@@ -214,7 +204,7 @@ export function ResubmissionForm({
             maxLength={255}
             aria-invalid={titleError ? "true" : "false"}
             aria-describedby={titleError ? "title-error" : undefined}
-            className={fieldClass}
+            className={RESUBMISSION_FIELD_CLASS}
             {...register("title")}
           />
           <FieldErrorMessage id="title-error" message={titleError} />
@@ -230,7 +220,7 @@ export function ResubmissionForm({
             rows={5}
             aria-invalid={summaryError ? "true" : "false"}
             aria-describedby={summaryError ? "summary-error" : undefined}
-            className={fieldClass}
+            className={RESUBMISSION_FIELD_CLASS}
             {...register("summary")}
           />
           <FieldErrorMessage id="summary-error" message={summaryError} />
@@ -244,7 +234,7 @@ export function ResubmissionForm({
             id="categoryId"
             aria-invalid={categoryError ? "true" : "false"}
             aria-describedby={categoryError ? "category-error" : undefined}
-            className={fieldClass}
+            className={RESUBMISSION_FIELD_CLASS}
             {...register("categoryId")}
           >
             <option value="" disabled>
@@ -259,276 +249,25 @@ export function ResubmissionForm({
           <FieldErrorMessage id="category-error" message={categoryError} />
         </div>
 
-        {fields.map((field) => {
-          const id = `answer-${field.key}`;
-          const errorId = `${id}-error`;
-          const hintId = `${id}-hint`;
-          const error =
-            errors.answers?.[field.key]?.message ?? state.fieldErrors?.[field.key];
-          const describedBy =
-            [field.helpText ? hintId : "", error ? errorId : ""]
-              .filter(Boolean)
-              .join(" ") || undefined;
-          const registration = register(
-            `answers.${field.key}` as Path<ResubmissionFormValues>,
-          );
-
-          return (
-            <div key={field.key}>
-              {field.type === "checkbox" ? (
-                <label
-                  htmlFor={id}
-                  className="flex items-start gap-3 text-sm leading-6 text-ceda-body"
-                >
-                  <input
-                    id={id}
-                    type="checkbox"
-                    aria-invalid={error ? "true" : "false"}
-                    aria-describedby={describedBy}
-                    className="mt-1 h-5 w-5 accent-ceda-burgundy"
-                    {...registration}
-                  />
-                  <span className="font-semibold text-ceda-ink">
-                    {field.label}
-                    {field.required ? " *" : ""}
-                  </span>
-                </label>
-              ) : (
-                <>
-                  {!(
-                    field.type === "select" &&
-                    field.options &&
-                    field.options.length <= 5
-                  ) &&
-                  field.type !== "multiselect" ? (
-                    <label
-                      htmlFor={id}
-                      className="block text-sm font-semibold text-ceda-ink"
-                    >
-                      {field.label}
-                      {field.required ? " *" : ""}
-                    </label>
-                  ) : null}
-
-                  {field.helpText ? (
-                    <p id={hintId} className="mt-1 text-sm text-ceda-muted">
-                      {field.helpText}
-                    </p>
-                  ) : null}
-
-                  {field.type === "textarea" ? (
-                    <textarea
-                      id={id}
-                      maxLength={4000}
-                      rows={4}
-                      aria-invalid={error ? "true" : "false"}
-                      aria-describedby={describedBy}
-                      className={fieldClass}
-                      {...registration}
-                    />
-                  ) : null}
-                  {field.type === "text" ? (
-                    <input
-                      id={id}
-                      type="text"
-                      maxLength={4000}
-                      aria-invalid={error ? "true" : "false"}
-                      aria-describedby={describedBy}
-                      className={fieldClass}
-                      {...registration}
-                    />
-                  ) : null}
-                  {field.type === "number" ? (
-                    <input
-                      id={id}
-                      type="number"
-                      step="any"
-                      aria-invalid={error ? "true" : "false"}
-                      aria-describedby={describedBy}
-                      className={fieldClass}
-                      {...registration}
-                    />
-                  ) : null}
-                  {field.type === "date" ? (
-                    <input
-                      id={id}
-                      type="date"
-                      aria-invalid={error ? "true" : "false"}
-                      aria-describedby={describedBy}
-                      className={fieldClass}
-                      {...registration}
-                    />
-                  ) : null}
-                  {field.type === "url" ? (
-                    <input
-                      id={id}
-                      type="url"
-                      inputMode="url"
-                      maxLength={4000}
-                      aria-invalid={error ? "true" : "false"}
-                      aria-describedby={describedBy}
-                      className={fieldClass}
-                      {...registration}
-                    />
-                  ) : null}
-                  {field.type === "select" &&
-                  field.options &&
-                  field.options.length > 5 ? (
-                    <select
-                      id={id}
-                      aria-invalid={error ? "true" : "false"}
-                      aria-describedby={describedBy}
-                      className={fieldClass}
-                      {...registration}
-                    >
-                      <option value="" disabled>
-                        Select an option
-                      </option>
-                      {field.options.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  ) : null}
-                  {field.type === "select" &&
-                  field.options &&
-                  field.options.length <= 5 ? (
-                    <fieldset
-                      role="radiogroup"
-                      aria-invalid={error ? "true" : "false"}
-                      aria-describedby={describedBy}
-                      aria-required={field.required}
-                      className="mt-2 space-y-1"
-                    >
-                      <legend className="mb-1 text-sm font-semibold text-ceda-ink">
-                        {field.label}
-                        {field.required ? " *" : ""}
-                      </legend>
-                      {field.options.map((option) => (
-                        <label
-                          key={option}
-                          className="flex min-h-10 items-center gap-3 text-sm text-ceda-body"
-                        >
-                          <input
-                            type="radio"
-                            value={option}
-                            className="h-5 w-5 accent-ceda-burgundy"
-                            {...registration}
-                          />
-                          {option}
-                        </label>
-                      ))}
-                    </fieldset>
-                  ) : null}
-                  {field.type === "multiselect" && field.options?.length ? (
-                    <fieldset
-                      aria-describedby={describedBy}
-                      aria-required={field.required}
-                      className="mt-2 space-y-1"
-                    >
-                      <legend className="mb-1 text-sm font-semibold text-ceda-ink">
-                        {field.label}
-                        {field.required ? " *" : ""}
-                      </legend>
-                      {field.options.map((option) => (
-                        <label
-                          key={option}
-                          className="flex min-h-10 items-center gap-3 text-sm text-ceda-body"
-                        >
-                          <input
-                            type="checkbox"
-                            value={option}
-                            aria-invalid={error ? "true" : "false"}
-                            className="h-5 w-5 accent-ceda-burgundy"
-                            {...registration}
-                          />
-                          {option}
-                        </label>
-                      ))}
-                    </fieldset>
-                  ) : null}
-                </>
-              )}
-              {field.type === "checkbox" && field.helpText ? (
-                <p id={hintId} className="mt-1 text-sm text-ceda-muted">
-                  {field.helpText}
-                </p>
-              ) : null}
-              <FieldErrorMessage id={errorId} message={error} />
-            </div>
-          );
-        })}
-
-        <fieldset className="space-y-4 rounded-2xl border border-ceda-line bg-[#FFFDFC] p-4 sm:p-5">
-          <legend className="px-1 text-sm font-semibold text-ceda-ink">
-            Supporting documents
-          </legend>
-          {existingAttachments.length > 0 ? (
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-ceda-muted">
-                Current version files — uncheck any file you want to omit from the revised version
-              </p>
-              <ul className="space-y-2">
-                {existingAttachments.map((file) => {
-                  const checked = keptIds.includes(file.id);
-                  const checkboxId = `keep-attachment-${file.id}`;
-                  return (
-                    <li
-                      key={file.id}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ceda-line bg-white px-3.5 py-2.5"
-                    >
-                      <label
-                        htmlFor={checkboxId}
-                        className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 text-sm text-ceda-body"
-                      >
-                        <input
-                          id={checkboxId}
-                          type="checkbox"
-                          value={file.id}
-                          checked={checked}
-                          onChange={() => toggleKeptAttachment(file.id)}
-                          className="h-5 w-5 shrink-0 accent-ceda-burgundy"
-                        />
-                        <span className="min-w-0">
-                          <span className="block truncate font-semibold text-ceda-ink">
-                            {file.fileName}
-                          </span>
-                          <span className="block text-xs text-ceda-muted">
-                            {getAttachmentTypeLabel(file.mimeType, file.fileName)} ·{" "}
-                            {formatFileSize(file.fileSize)} ·{" "}
-                            {checked ? "Keeping in revision" : "Will not be carried forward"}
-                          </span>
-                        </span>
-                      </label>
-                      <a
-                        href={getAttachmentDownloadPath(file.id)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-ceda-line px-3.5 text-xs font-semibold text-ceda-burgundy hover:bg-[#FFF9F4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy"
-                      >
-                        <Download aria-hidden="true" className="h-3.5 w-3.5" />
-                        Download
-                      </a>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ) : null}
-
-          <AttachmentUploader
-            mode="resubmission"
-            ideaId={ideaId}
-            existingKeptCount={keptIds.length}
-            onUploadingChange={setUploadingAttachments}
+        {fields.map((field) => (
+          <ResubmissionFieldControl
+            key={field.key}
+            field={field}
+            register={register}
+            error={
+              errors.answers?.[field.key]?.message ?? state.fieldErrors?.[field.key]
+            }
           />
-          {state.fieldErrors?.attachments ? (
-            <p className="text-sm text-red-800" role="alert">
-              {state.fieldErrors.attachments}
-            </p>
-          ) : null}
-        </fieldset>
+        ))}
+
+        <ResubmissionAttachmentsSection
+          ideaId={ideaId}
+          existingAttachments={existingAttachments}
+          keptIds={keptIds}
+          onToggleKept={toggleKeptAttachment}
+          onUploadingChange={setUploadingAttachments}
+          errorMessage={state.fieldErrors?.attachments}
+        />
 
         <div>
           <label htmlFor="response" className="text-sm font-semibold text-ceda-ink">
@@ -545,7 +284,7 @@ export function ResubmissionForm({
             aria-describedby={
               responseError ? "response-hint response-error" : "response-hint"
             }
-            className={fieldClass}
+            className={RESUBMISSION_FIELD_CLASS}
             {...register("response")}
           />
           <FieldErrorMessage id="response-error" message={responseError} />

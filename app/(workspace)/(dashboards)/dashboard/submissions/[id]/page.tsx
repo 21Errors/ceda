@@ -111,8 +111,8 @@ async function SubmissionDetail({
   return (
     <main
       id="main-content"
-      className="flex-1 bg-white px-4 py-10 sm:px-6 sm:py-14">
-      <div className="mx-auto max-w-3xl">
+      className="flex-1 bg-white px-gutter py-ds-6 sm:py-ds-8">
+      <div className="mx-auto w-full max-w-(--container-workspace)">
         <Link
           href="/dashboard"
           className="text-sm font-semibold text-ceda-burgundy underline underline-offset-4">

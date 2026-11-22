@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.neon
+.vercel
+dist
+coverage
+.env
+.env.local
+.env.*.local
+*.tsbuildinfo
+npm-debug.log*

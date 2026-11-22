@@ -1,8 +1,6 @@
 import { cache } from "react";
-import { and, count, eq, isNull } from "drizzle-orm";
 import { getCurrentSession, getUserRoles, type PortalRole } from "@/lib/authorization";
-import { db } from "@/db";
-import { notifications } from "@/db/schema";
+import { getNotificationCounts } from "@/lib/server/notifications-inbox";
 
 export interface WorkspaceNavContext {
   user: {
@@ -22,12 +20,9 @@ export const getWorkspaceNavContext = cache(async (): Promise<WorkspaceNavContex
   const session = await getCurrentSession();
   if (!session?.user) return null;
 
-  const [roles, unreadRows] = await Promise.all([
+  const [roles, counts] = await Promise.all([
     getUserRoles(session.user.id),
-    db
-      .select({ total: count() })
-      .from(notifications)
-      .where(and(eq(notifications.userId, session.user.id), isNull(notifications.readAt))),
+    getNotificationCounts(session.user.id),
   ]);
 
   return {
@@ -37,6 +32,6 @@ export const getWorkspaceNavContext = cache(async (): Promise<WorkspaceNavContex
       email: session.user.email || "",
     },
     roles,
-    unreadNotifications: Number(unreadRows[0]?.total ?? 0),
+    unreadNotifications: counts.unreadCount,
   };
 });

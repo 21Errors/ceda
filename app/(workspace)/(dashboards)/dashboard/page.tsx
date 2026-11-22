@@ -57,8 +57,8 @@ async function DashboardContent() {
         userRoles.includes(workspace.role as (typeof userRoles)[number]),
     );
     return (
-      <main id="main-content" className="flex-1 bg-white px-4 py-14 sm:px-6">
-        <div className="mx-auto max-w-250">
+      <main id="main-content" className="flex-1 bg-white px-gutter py-ds-6 sm:py-ds-8">
+        <div className="mx-auto w-full max-w-(--container-workspace)">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-ceda-burgundy">
             Your account
           </p>

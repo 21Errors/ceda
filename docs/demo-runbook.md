@@ -1,43 +1,80 @@
-# End-to-end role walkthrough
+# End-to-End 6-Role Demo Runbook
 
-Use six distinct, verified accounts for the cleanest demonstration: submitter, administrator, evaluator, adjudicator, committee member, and service consultant. The same verified account can hold more than one role and select a workspace from `/dashboard`, but separate people better demonstrate the intended separation of duties.
+Use this walkthrough to demonstrate the entire **CEDA Innovation Management Portal** lifecycle live at **[https://ceda-alpha.vercel.app/](https://ceda-alpha.vercel.app/)** or locally at `http://localhost:3000`.
 
-## Prepare the demo
+---
 
-1. Copy `.env.example` to `.env.local` and set the database URL, a random `BETTER_AUTH_SECRET`, and the local portal URL. Add Gmail SMTP credentials if verification codes should arrive by email; in local development the fallback code is printed in the dev server log.
-2. Run `npm run db:migrate`, then `npm run db:seed`.
-3. Register and verify an account to act as the administrator. Set `CEDA_BOOTSTRAP_ADMIN_EMAIL` to that verified email and run `npm run db:bootstrap-admin` once.
-4. Register and verify the other accounts. As administrator, open **Manage users and roles** at `/admin/users` and assign the evaluator, adjudicator, committee member, and consultant roles to the matching accounts.
-5. Confirm the seeded innovation opportunity is open and has evaluation stages, active scoring criteria, and at least one active submission category.
-6. As administrator, open `/admin/categories` to add or edit a test category. In the call editor, add or reorder a stage, then edit a criterion before any score has been recorded. Scored criteria are locked and should be archived instead.
-7. As administrator, open `/admin/content/faqs` and confirm the seeded questions can be edited, unpublished, and republished. The public FAQ is at `/faq`.
+## 1. Quick Demo Setup & Credentials
 
-## Submission through award
+Run migrations, seed portal configuration, and seed the 6 pre-verified role accounts:
 
-1. **Submitter:** Sign in and choose **Submitter dashboard**. Create an idea, complete the configured fields and terms, save the draft, then submit it. Confirm it appears in the dashboard and has a reference number and initial status.
-2. **Evaluator:** Sign in and open **Evaluation queue**. Claim an available submission, inspect its full form answers and supporting links, add a private evaluator note, score every active criterion, and submit the review. The submission moves through evaluation stages automatically.
-3. **Evaluator:** When the next evaluation stage is ready, an in-app notification and email are sent to evaluator-role accounts; an evaluator claims it from the shared queue. The submission moves to adjudication after its final evaluation stage.
-5. **Adjudicator:** Open `/adjudicator`, review scores and proposal details, then approve the idea with a rationale of at least 20 characters.
-6. **Administrator:** Open **Grant awards** at `/admin/awards`, add a title and optional tier/details. Granting the award records the recognition, advances the idea to the award stage, and notifies the submitter in the portal.
-7. **Submitter:** Reopen the submission detail page and confirm its final status, progress timeline, and award.
-8. **Submitter:** Open `/notifications` to read in-portal alerts. Open `/account/settings` to manage in-portal and email delivery preferences. Email requires working Gmail SMTP credentials; SMS is not connected.
+```powershell
+npm run db:migrate
+npm run db:seed
+npm run db:seed-users
+```
 
-## Feedback loop
+All 6 accounts sign in at **`/login`** using password **`Password123!`**:
 
-Use another test submission. After evaluation, have the adjudicator choose **Request changes** and enter actionable rationale. The submitter should see public feedback and a resubmission form. Submit a revised version and confirm the version number increases while the old version remains in history. The revised submission returns to the evaluator queue for a new claim.
+| Role | Email | Password | Primary Workspace |
+| :--- | :--- | :--- | :--- |
+| **Submitter** | `submitter@ceda.test` | `Password123!` | `/dashboard` |
+| **Evaluator** | `evaluator@ceda.test` | `Password123!` | `/evaluator` |
+| **Adjudicator** | `adjudicator@ceda.test` | `Password123!` | `/adjudicator` |
+| **Administrator** | `admin@ceda.test` | `Password123!` | `/admin` |
+| **Service Consultant** | `consultant@ceda.test` | `Password123!` | `/consultant` |
+| **Committee Member** | `committee@ceda.test` | `Password123!` | `/committee` |
 
-## Committee monitoring
+---
 
-Sign in as committee member and open `/committee`. Confirm submitted ideas show their reference, opportunity, stage, and public status. Follow an idea, advance its workflow as administrator/evaluator/adjudicator, then confirm an in-app notification appears for the committee account. Committee screens do not expose scores, answers, submitter identity, or internal notes.
+## 2. Public Portal & Admin Content Management
 
-## Consultant chat
+1. Browse **`/`**, **`/guidelines`**, **`/news`**, **`/faq`**, **`/support`**, and **`/privacy`**.
+2. Sign in as **Administrator** (`admin@ceda.test`):
+   - Open **`/admin/content/documents`**: upload a sample PDF/DOCX template (stored in Neon Object Storage), publish it, and verify it appears for download on **`/guidelines`**.
+   - Open **`/admin/content/pages`**: edit a guideline section or publish a news announcement and verify it renders live on **`/guidelines`** and **`/news`**.
+   - Open **`/admin/content/faqs`** and **`/admin/categories`**: confirm audited create/edit/publish controls.
+   - Open **`/admin/calls/<id>`**: inspect dynamic form fields, workflow stages, and weighted scoring criteria.
 
-Sign in as submitter and open the CEDA Consultant chat. Start a conversation and send a message. Sign in as consultant and open `/consultant`; claim the waiting conversation, reply, and close it. Return to the submitter account to confirm the reply and closed state appear. The queue uses prototype office hours (weekdays, 09:00–16:00 Africa/Gaborone time).
+---
 
-## Expected prototype limits
+## 3. Idea Submission, File Upload & Readiness Checker
 
-- Idea-follow alerts are persisted in-app. Lifecycle and consultant chat alerts are available in-app and by email when the recipient has verified their email and enabled email notifications. SMS is not connected.
-- Social sign-in buttons are visual placeholders and do not authenticate.
-- The supporting-material fields accept links; secure file upload is not implemented.
-- External verification email needs working Gmail SMTP credentials; local development otherwise prints the code to the server console.
-- Cross-browser interaction, live passkey hardware, and production hosting are separate verification tasks.
+1. Sign in as **Submitter** (`submitter@ceda.test`) and navigate to **`/submit`**.
+2. Fill out the 7-section wizard:
+   - Observe the live **Idea Completeness & Readiness Checker** in the right sidebar updating from `0/100` to `Ready to submit` with one-click section jump links.
+   - Upload a supporting PDF/pitch deck in Section 7 (`Solution Documents` → Neon Object Storage) and review the full pre-submission readiness checklist.
+3. Submit the application and note the generated reference number (`CEDA-2026-XXXXXXXX`).
+4. Open **`/track?ref=<referenceNo>`**: verify the 5-stage visual `PipelineStepper`, stage history timeline, and free alert subscription toggle.
+
+---
+
+## 4. Multi-Level Evaluation & Duplicate Detection
+
+1. Sign in as **Evaluator** (`evaluator@ceda.test`) and open **`/evaluator`**.
+2. Claim the newly submitted idea from the evaluation queue and open the assignment.
+3. Point out the **Automated Duplicate / Similar Proposal Check** banner at the top of the review page (create a second overlapping proposal if you want to demonstrate a live `% match` alert with shared keywords!).
+4. Add a **private evaluator note** (never visible to the submitter), download the supporting attachment, score each weighted criterion, and submit the evaluation.
+5. Claim and complete Level 2 Evaluation so the submission automatically advances to **Adjudication**.
+
+---
+
+## 5. Adjudication, Revision Loop & Award Recognition
+
+1. Sign in as **Adjudicator** (`adjudicator@ceda.test`) and open **`/adjudicator`**.
+2. Inspect the aggregated Level 1 + Level 2 scores, attachments, and automated overlap alert.
+3. **Optional Revision Loop:** Choose **Request changes** with ≥ 20-character rationale → sign back in as **Submitter**, view the new **Adjudication decisions** history panel on `/dashboard/submissions/[id]`, upload a revised file, and submit Version 2.
+4. **Approval & Award:** Approve the submission in `/adjudicator` with rationale → sign in as **Administrator**, open **`/admin/awards`**, and grant a formal award.
+5. Return to **Submitter** (`/dashboard/submissions/[id]` and `/track`) to confirm the final **Awarded** status, adjudication rationale history, full progress timeline, and award recognition card.
+
+---
+
+## 6. Committee Monitoring, Live Chat & Executive Reports
+
+1. **Committee Member (`committee@ceda.test`):** Open **`/committee`**. Confirm public workflow status visibility (with zero evaluation scores or private notes exposed) and toggle **Follow** to subscribe to lifecycle alerts.
+2. **Live Support Chat:**
+   - As **Submitter**, open the floating **CEDA Service Consultant** chat modal, start a conversation, and send a message (notice business hours / Botswana public holiday / all-agents-busy status banners).
+   - As **Service Consultant (`consultant@ceda.test`)**, open **`/consultant`**, claim the waiting chat, reply, refresh the browser (confirming active chat retention across refreshes), inspect the live response/resolution metrics, and close the chat.
+3. **Executive Reports & Audit (`admin@ceda.test`):**
+   - Open **`/admin/reports`** to view the Recharts dashboard (activity trend, stage conversion funnel, sector bar chart, stage turnarounds, applicant demographics, evaluator workload, and chat analytics) and test **Export CSV** and **Download PDF**.
+   - Open **`/admin/audit`** to inspect the immutable audit trail of every action performed during the demo.

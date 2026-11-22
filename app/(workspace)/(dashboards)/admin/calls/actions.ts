@@ -69,6 +69,7 @@ export async function createCall(formData: FormData) {
   });
 
   revalidatePath("/admin");
+  revalidatePath("/admin/calls");
   redirect(`/admin/calls/${call.id}`);
 }
 
@@ -148,6 +149,7 @@ export async function updateCallStatus(formData: FormData) {
     });
   });
   revalidatePath("/admin");
+  revalidatePath("/admin/calls");
   revalidatePath(`/admin/calls/${callId}`);
   revalidatePath("/submit");
 }

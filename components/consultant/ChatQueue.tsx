@@ -1,35 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import {
-  CheckCircle2,
-  Clock3,
-  MessageSquare,
-  RefreshCw,
-  Users,
-} from "lucide-react";
-import {
-  FieldErrorMessage,
-  FormErrorAnnouncer,
-} from "@/components/ui/FormErrorFeedback";
 import type { ChatAnalyticsSummary } from "@/lib/chat-analytics-calc";
-import { formatDurationSeconds } from "@/lib/chat-analytics-calc";
 import type { DeskAvailability } from "@/lib/chat-availability";
-import {
-  chatMessageSchema,
-  type ChatMessageFormValues,
-} from "@/lib/form-schemas";
 import type { QueueConversationItem } from "@/lib/server/chat-service";
-import { zodResolver } from "@/lib/zod-resolver";
-
-type ChatMessage = {
-  id: string;
-  senderId: string;
-  senderName: string;
-  body: string;
-  createdAt: string;
-};
+import { ChatDeskStats } from "./ChatDeskStats";
+import { ChatQueueSidebar } from "./ChatQueueSidebar";
+import { ChatThreadPanel, type ThreadMessage } from "./ChatThreadPanel";
 
 type Conversation = {
   id: string;
@@ -42,7 +19,7 @@ type Conversation = {
 
 type ChatData = {
   conversation: Conversation | null;
-  messages: ChatMessage[];
+  messages: ThreadMessage[];
   currentUserId: string;
   isConsultantOpen: boolean;
   availability?: DeskAvailability;
@@ -105,19 +82,6 @@ export function ChatQueue({
   const [refreshingQueue, setRefreshingQueue] = useState(false);
   const [error, setError] = useState("");
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, submitCount },
-  } = useForm<ChatMessageFormValues>({
-    resolver: zodResolver(chatMessageSchema),
-    mode: "onTouched",
-    reValidateMode: "onChange",
-    defaultValues: { body: "" },
-  });
-
-  // Restore last selected conversation from sessionStorage on initial mount if URL had none
   useEffect(() => {
     if (initialSelectedId) return;
     let active = true;
@@ -160,41 +124,36 @@ export function ChatQueue({
     }
   }, []);
 
-  const refreshQueue = useCallback(
-    async (showSpinner = false) => {
-      if (showSpinner) setRefreshingQueue(true);
-      const response = await fetch("/api/chat?scope=queue", {
-        cache: "no-store",
-      }).catch(() => null);
-      const data = (await response?.json().catch(() => null)) as
-        | QueuePayload
-        | null;
-      if (showSpinner) setRefreshingQueue(false);
-      if (!response?.ok || !data) return;
+  const refreshQueue = useCallback(async (showSpinner = false) => {
+    if (showSpinner) setRefreshingQueue(true);
+    const response = await fetch("/api/chat?scope=queue", {
+      cache: "no-store",
+    }).catch(() => null);
+    const data = (await response?.json().catch(() => null)) as QueuePayload | null;
+    if (showSpinner) setRefreshingQueue(false);
+    if (!response?.ok || !data) return;
 
-      const nextQueue = {
-        myActive: data.myActive,
-        waiting: data.waiting,
-        recentClosed: data.recentClosed,
-      };
-      setQueue(nextQueue);
-      setAvailability(data.availability);
-      setAnalytics(data.analytics);
+    const nextQueue = {
+      myActive: data.myActive,
+      waiting: data.waiting,
+      recentClosed: data.recentClosed,
+    };
+    setQueue(nextQueue);
+    setAvailability(data.availability);
+    setAnalytics(data.analytics);
 
-      setSelectedId((current) => {
-        const all = [
-          ...nextQueue.myActive,
-          ...nextQueue.waiting,
-          ...nextQueue.recentClosed,
-        ];
-        if (current && all.some((item) => item.id === current)) {
-          return current;
-        }
-        return pickDefaultConversationId("", nextQueue);
-      });
-    },
-    [],
-  );
+    setSelectedId((current) => {
+      const all = [
+        ...nextQueue.myActive,
+        ...nextQueue.waiting,
+        ...nextQueue.recentClosed,
+      ];
+      if (current && all.some((item) => item.id === current)) {
+        return current;
+      }
+      return pickDefaultConversationId("", nextQueue);
+    });
+  }, []);
 
   const refreshThread = useCallback(async (id: string) => {
     if (!id) {
@@ -257,389 +216,48 @@ export function ChatQueue({
     return true;
   }
 
-  async function onSend(values: ChatMessageFormValues) {
-    if (busy) return;
-    if (await act("message", values.body)) reset();
-  }
-
   const allItems = useMemo(
     () => [...queue.myActive, ...queue.waiting, ...queue.recentClosed],
     [queue],
   );
   const selectedItem = allItems.find((item) => item.id === selectedId) ?? null;
   const activeConversation = chat?.conversation;
-  const effectiveStatus =
-    activeConversation?.status ?? selectedItem?.status ?? null;
-  const assignedToMe =
-    (activeConversation?.agentId ?? selectedItem?.agentId) === currentUserId;
-
-  const deskStatusLabel =
-    availability.status === "public_holiday"
-      ? `Public holiday (${availability.holidayName})`
-      : availability.status === "offline_hours"
-        ? "Offline (09:00–16:00 CAT)"
-        : availability.status === "busy"
-          ? "All agents at capacity"
-          : "Desk open & accepting chats";
-
-  const deskStatusTone =
-    availability.status === "open"
-      ? "border-emerald-700/25 bg-emerald-50 text-emerald-900"
-      : availability.status === "busy"
-        ? "border-amber-600/30 bg-amber-50 text-amber-950"
-        : "border-ceda-line bg-[#FFF9F4] text-ceda-burgundy";
+  const effectiveStatus = activeConversation?.status ?? selectedItem?.status ?? null;
+  const effectiveAgentId = activeConversation?.agentId ?? selectedItem?.agentId;
+  const assignedToMe = effectiveAgentId === currentUserId;
 
   return (
     <div className="mt-6 space-y-6">
-      {/* Desk status & live chat analytics summary */}
-      <section aria-label="Service desk status and chat analytics">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <span
-            className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-semibold ${deskStatusTone}`}>
-            <span
-              aria-hidden="true"
-              className={`h-2 w-2 rounded-full ${
-                availability.status === "open"
-                  ? "bg-emerald-600"
-                  : availability.status === "busy"
-                    ? "bg-amber-600"
-                    : "bg-ceda-burgundy"
-              }`}
-            />
-            {deskStatusLabel} · Your active load: {queue.myActive.length} /{" "}
-            {availability.maxConcurrentPerAgent}
-          </span>
-          <button
-            type="button"
-            onClick={() => void refreshQueue(true)}
-            disabled={refreshingQueue}
-            className="inline-flex min-h-10 items-center gap-2 rounded-full border border-ceda-line bg-white px-4 text-xs font-semibold text-ceda-burgundy hover:bg-[#FFF9F4] disabled:opacity-60">
-            <RefreshCw
-              aria-hidden="true"
-              className={`h-3.5 w-3.5 ${refreshingQueue ? "animate-spin" : ""}`}
-            />
-            Refresh queue
-          </button>
-        </div>
+      <ChatDeskStats
+        availability={availability}
+        analytics={analytics}
+        myActiveCount={queue.myActive.length}
+        refreshing={refreshingQueue}
+        onRefresh={() => void refreshQueue(true)}
+      />
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <article className="rounded-2xl border border-ceda-line bg-[#FFFDFC] p-4">
-            <p className="flex items-center gap-1.5 text-xs font-semibold text-ceda-muted">
-              <MessageSquare aria-hidden="true" className="h-3.5 w-3.5 text-ceda-burgundy" />
-              Total chats (7d)
-            </p>
-            <p className="mt-1.5 text-2xl font-bold text-ceda-ink">
-              {analytics.totalConversations}
-              <span className="ml-2 text-xs font-normal text-ceda-muted">
-                ({analytics.conversationsLast7Days} last 7d)
-              </span>
-            </p>
-          </article>
-
-          <article className="rounded-2xl border border-ceda-line bg-[#FFFDFC] p-4">
-            <p className="flex items-center gap-1.5 text-xs font-semibold text-ceda-muted">
-              <Users aria-hidden="true" className="h-3.5 w-3.5 text-ceda-burgundy" />
-              Queue &amp; active
-            </p>
-            <p className="mt-1.5 text-2xl font-bold text-ceda-ink">
-              {analytics.waitingCount} waiting
-              <span className="ml-2 text-xs font-normal text-ceda-muted">
-                · {analytics.activeCount} active
-              </span>
-            </p>
-          </article>
-
-          <article className="rounded-2xl border border-ceda-line bg-[#FFFDFC] p-4">
-            <p className="flex items-center gap-1.5 text-xs font-semibold text-ceda-muted">
-              <Clock3 aria-hidden="true" className="h-3.5 w-3.5 text-ceda-burgundy" />
-              Avg first response
-            </p>
-            <p className="mt-1.5 text-2xl font-bold text-ceda-ink">
-              {formatDurationSeconds(analytics.averageFirstResponseSeconds)}
-              <span className="ml-2 text-xs font-normal text-ceda-muted">
-                (median{" "}
-                {formatDurationSeconds(analytics.medianFirstResponseSeconds)})
-              </span>
-            </p>
-          </article>
-
-          <article className="rounded-2xl border border-ceda-line bg-[#FFFDFC] p-4">
-            <p className="flex items-center gap-1.5 text-xs font-semibold text-ceda-muted">
-              <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5 text-ceda-burgundy" />
-              Resolution rate
-            </p>
-            <p className="mt-1.5 text-2xl font-bold text-ceda-ink">
-              {analytics.resolutionRatePercent !== null
-                ? `${analytics.resolutionRatePercent}%`
-                : "—"}
-              <span className="ml-2 text-xs font-normal text-ceda-muted">
-                · avg {formatDurationSeconds(analytics.averageResolutionSeconds)}
-              </span>
-            </p>
-          </article>
-        </div>
-      </section>
-
-      {/* Queue sidebar + active thread */}
       <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
-        <nav aria-label="Consultant chat queue" className="space-y-5">
-          {/* Assigned active chats */}
-          <div>
-            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-ceda-burgundy">
-              My active chats ({queue.myActive.length})
-            </h2>
-            <div className="mt-2 space-y-2">
-              {queue.myActive.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => selectConversation(item.id)}
-                  aria-pressed={item.id === selectedId}
-                  className={`w-full rounded-xl border p-3.5 text-left transition ${
-                    item.id === selectedId
-                      ? "border-ceda-burgundy bg-[#FFF9F4] ring-1 ring-ceda-burgundy/20"
-                      : "border-ceda-line bg-white hover:bg-[#FFFDFC]"
-                  }`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-bold text-ceda-ink">
-                      {item.requesterName}
-                    </span>
-                    <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-900">
-                      Active
-                    </span>
-                  </div>
-                  <span className="mt-1 block text-xs text-ceda-muted">
-                    {item.messageCount}{" "}
-                    {item.messageCount === 1 ? "message" : "messages"} · Started{" "}
-                    {new Date(item.startedAt).toLocaleString("en-BW", {
-                      dateStyle: "short",
-                      timeStyle: "short",
-                      timeZone: "Africa/Gaborone",
-                    })}
-                  </span>
-                </button>
-              ))}
-              {queue.myActive.length === 0 && (
-                <p className="rounded-xl border border-dashed border-ceda-line bg-[#FFFDFC] p-3.5 text-xs text-ceda-muted">
-                  No active chats assigned to you right now.
-                </p>
-              )}
-            </div>
-          </div>
+        <ChatQueueSidebar
+          myActive={queue.myActive}
+          waiting={queue.waiting}
+          recentClosed={queue.recentClosed}
+          selectedId={selectedId}
+          onSelect={selectConversation}
+        />
 
-          {/* Waiting queue */}
-          <div>
-            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-ceda-muted">
-              Waiting queue ({queue.waiting.length})
-            </h2>
-            <div className="mt-2 space-y-2">
-              {queue.waiting.map((item, idx) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => selectConversation(item.id)}
-                  aria-pressed={item.id === selectedId}
-                  className={`w-full rounded-xl border p-3.5 text-left transition ${
-                    item.id === selectedId
-                      ? "border-ceda-burgundy bg-[#FFF9F4] ring-1 ring-ceda-burgundy/20"
-                      : "border-ceda-line bg-white hover:bg-[#FFFDFC]"
-                  }`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-bold text-ceda-ink">
-                      #{idx + 1} · {item.requesterName}
-                    </span>
-                    <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-900">
-                      Waiting
-                    </span>
-                  </div>
-                  <span className="mt-1 block text-xs text-ceda-muted">
-                    {item.messageCount}{" "}
-                    {item.messageCount === 1 ? "message" : "messages"} · Since{" "}
-                    {new Date(item.startedAt).toLocaleString("en-BW", {
-                      dateStyle: "short",
-                      timeStyle: "short",
-                      timeZone: "Africa/Gaborone",
-                    })}
-                  </span>
-                </button>
-              ))}
-              {queue.waiting.length === 0 && (
-                <p className="rounded-xl bg-[#FFF9F4] p-3.5 text-xs text-ceda-muted">
-                  No applicants are waiting in the queue.
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Recently closed by this consultant */}
-          {queue.recentClosed.length > 0 && (
-            <details className="rounded-xl border border-ceda-line bg-[#FFFDFC] p-3">
-              <summary className="text-xs font-bold uppercase tracking-[0.14em] text-ceda-muted">
-                Recently closed ({queue.recentClosed.length})
-              </summary>
-              <div className="mt-2.5 space-y-2">
-                {queue.recentClosed.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => selectConversation(item.id)}
-                    aria-pressed={item.id === selectedId}
-                    className={`w-full rounded-lg border p-2.5 text-left text-xs ${
-                      item.id === selectedId
-                        ? "border-ceda-burgundy bg-[#FFF9F4]"
-                        : "border-ceda-line bg-white"
-                    }`}>
-                    <span className="block font-semibold text-ceda-ink">
-                      {item.requesterName}
-                    </span>
-                    <span className="mt-0.5 block text-[11px] text-ceda-muted">
-                      Closed{" "}
-                      {item.closedAt
-                        ? new Date(item.closedAt).toLocaleDateString("en-BW", {
-                            dateStyle: "medium",
-                            timeZone: "Africa/Gaborone",
-                          })
-                        : "—"}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </details>
-          )}
-        </nav>
-
-        <section
-          aria-label="Selected conversation"
-          className="flex min-h-125 flex-col rounded-2xl border border-ceda-line bg-white">
-          {!selectedItem ? (
-            <p className="m-auto p-6 text-sm text-ceda-muted">
-              Select a conversation from your active chats or the waiting queue.
-            </p>
-          ) : (
-            <>
-              <header className="flex flex-wrap items-center justify-between gap-3 border-b border-ceda-line p-4">
-                <div>
-                  <h2 className="font-bold text-ceda-ink">
-                    {selectedItem.requesterName}
-                  </h2>
-                  <p className="text-xs capitalize text-ceda-muted">
-                    {effectiveStatus ?? selectedItem.status}
-                    {assignedToMe ? " · Assigned to you" : ""}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {effectiveStatus === "waiting" &&
-                    !(activeConversation?.agentId ?? selectedItem.agentId) && (
-                      <button
-                        type="button"
-                        onClick={() => void act("claim")}
-                        disabled={busy}
-                        className="min-h-10 rounded-full bg-ceda-burgundy px-4 text-sm font-bold text-white hover:bg-[#5C150D] disabled:opacity-60">
-                        Claim chat
-                      </button>
-                    )}
-                  {assignedToMe && effectiveStatus === "active" && (
-                    <button
-                      type="button"
-                      onClick={() => void act("close")}
-                      disabled={busy}
-                      className="min-h-10 rounded-full border border-ceda-line px-4 text-sm font-semibold text-ceda-burgundy hover:bg-[#FFF9F4] disabled:opacity-60">
-                      Close chat
-                    </button>
-                  )}
-                </div>
-              </header>
-
-              {error && (
-                <p
-                  role="alert"
-                  className="border-b border-red-800/20 bg-red-50 px-4 py-3 text-sm text-red-900">
-                  {error}
-                </p>
-              )}
-
-              <div
-                className="flex-1 space-y-3 overflow-y-auto p-4"
-                aria-live="polite"
-                aria-label="Conversation messages">
-                {chat?.messages.map((item) => (
-                  <article
-                    key={item.id}
-                    className={`max-w-[85%] rounded-xl p-3 ${
-                      item.senderId === currentUserId
-                        ? "ml-auto bg-[#7A1F14] text-white"
-                        : "border border-ceda-line bg-[#FFF9F4] text-ceda-ink"
-                    }`}>
-                    <p className="text-xs font-semibold">{item.senderName}</p>
-                    <p className="mt-1 whitespace-pre-wrap text-sm leading-6">
-                      {item.body}
-                    </p>
-                    <time
-                      className="mt-1 block text-right text-[10px] opacity-70"
-                      dateTime={item.createdAt}>
-                      {new Date(item.createdAt).toLocaleTimeString("en-BW", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        timeZone: "Africa/Gaborone",
-                      })}
-                    </time>
-                  </article>
-                ))}
-                {chat && chat.messages.length === 0 && (
-                  <p className="text-sm text-ceda-muted">
-                    No messages have been sent yet.
-                  </p>
-                )}
-              </div>
-
-              {assignedToMe && effectiveStatus === "active" && (
-                <>
-                  <FormErrorAnnouncer
-                    errors={errors}
-                    submitCount={submitCount}
-                  />
-                  <form
-                    noValidate
-                    onSubmit={handleSubmit(onSend)}
-                    className="border-t border-ceda-line p-3">
-                    <div className="flex gap-2">
-                      <label htmlFor="consultant-reply" className="sr-only">
-                        Reply to requester
-                      </label>
-                      <input
-                        id="consultant-reply"
-                        maxLength={2000}
-                        aria-invalid={errors.body ? "true" : "false"}
-                        aria-describedby={
-                          errors.body ? "consultant-reply-error" : undefined
-                        }
-                        className="ds-field-control min-h-11 flex-1 rounded-lg border border-ceda-line px-3 text-sm"
-                        placeholder="Write a reply"
-                        {...register("body")}
-                      />
-                      <button
-                        type="submit"
-                        disabled={busy}
-                        className="min-h-11 rounded-full bg-ceda-burgundy px-4 text-sm font-bold text-white hover:bg-[#5C150D] disabled:opacity-60">
-                        Send
-                      </button>
-                    </div>
-                    <FieldErrorMessage
-                      id="consultant-reply-error"
-                      message={errors.body?.message}
-                    />
-                  </form>
-                </>
-              )}
-
-              {effectiveStatus === "closed" && (
-                <p className="border-t border-ceda-line bg-[#FFFDFC] px-4 py-3 text-center text-xs text-ceda-muted">
-                  This conversation has been resolved and closed.
-                </p>
-              )}
-            </>
-          )}
-        </section>
+        <ChatThreadPanel
+          currentUserId={currentUserId}
+          selectedItem={selectedItem}
+          effectiveStatus={effectiveStatus}
+          assignedToMe={assignedToMe}
+          hasAgent={Boolean(effectiveAgentId)}
+          messages={chat ? chat.messages : null}
+          busy={busy}
+          error={error}
+          onClaim={() => void act("claim")}
+          onClose={() => void act("close")}
+          onSendMessage={(body) => act("message", body)}
+        />
       </div>
     </div>
   );

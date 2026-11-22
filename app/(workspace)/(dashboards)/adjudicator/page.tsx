@@ -41,8 +41,8 @@ async function AdjudicationContent({
   return (
     <main
       id="main-content"
-      className="flex-1 bg-white px-4 py-10 sm:px-6 sm:py-14">
-      <div className="mx-auto max-w-275">
+      className="flex-1 bg-white px-gutter py-ds-6 sm:py-ds-8">
+      <div className="mx-auto w-full max-w-(--container-workspace)">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-ceda-burgundy">
           Adjudicator workspace
         </p>

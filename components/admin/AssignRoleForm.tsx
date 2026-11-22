@@ -1,9 +1,10 @@
 "use client";
 
 import { useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { assignRole } from "@/app/(workspace)/(dashboards)/admin/users/actions";
 import { FieldErrorMessage, FormErrorAnnouncer } from "@/components/ui/FormErrorFeedback";
+import { SelectDropdown } from "@/components/ui/SelectDropdown";
 import { assignRoleSchema, type AssignRoleFormValues } from "@/lib/form-schemas";
 import { zodResolver } from "@/lib/zod-resolver";
 
@@ -12,12 +13,13 @@ export function AssignRoleForm({
   availableRoles,
 }: {
   userId: string;
-  availableRoles: { id: string; name: string }[];
+  availableRoles: readonly { id: string; name: string }[];
 }) {
   const [pending, startTransition] = useTransition();
   const {
-    register,
+    control,
     handleSubmit,
+    reset,
     formState: { errors, submitCount },
   } = useForm<AssignRoleFormValues>({
     resolver: zodResolver(assignRoleSchema),
@@ -32,6 +34,7 @@ export function AssignRoleForm({
     formData.set("roleId", values.roleId);
     startTransition(async () => {
       await assignRole(formData);
+      reset();
     });
   });
 
@@ -44,37 +47,30 @@ export function AssignRoleForm({
         aria-labelledby={`user-title-${userId}`}
         className="flex flex-col gap-1"
       >
-        <div className="flex items-end gap-2">
-          <div>
-            <label
-              htmlFor={`role-${userId}`}
-              className="text-xs font-semibold text-ceda-ink"
-            >
-              Assign role
-            </label>
-            <select
-              id={`role-${userId}`}
-              aria-invalid={errors.roleId ? "true" : "false"}
-              aria-describedby={
-                errors.roleId ? `role-error-${userId}` : undefined
-              }
-              className="ds-field-control mt-1 min-h-10 rounded-lg border border-[#9A8175] bg-white px-3 text-sm text-ceda-ink"
-              {...register("roleId")}
-            >
-              <option value="" disabled>
-                Choose a role
-              </option>
-              {availableRoles.map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.name}
-                </option>
-              ))}
-            </select>
+        <div className="flex items-center gap-2">
+          <div className="w-44 shrink-0">
+            <Controller
+              control={control}
+              name="roleId"
+              render={({ field }) => (
+                <SelectDropdown
+                  groupLabel="Assign role"
+                  value={field.value}
+                  placeholder="Choose a role"
+                  invalid={Boolean(errors.roleId)}
+                  options={availableRoles.map((role) => ({
+                    value: role.id,
+                    label: role.name,
+                  }))}
+                  onChange={field.onChange}
+                />
+              )}
+            />
           </div>
           <button
             type="submit"
             disabled={pending}
-            className="min-h-10 rounded-full bg-ceda-burgundy px-4 text-sm font-bold text-white hover:bg-[#5C150D] disabled:opacity-60"
+            className="inline-flex min-h-10 shrink-0 items-center rounded-full bg-ceda-burgundy px-4 text-xs font-bold text-white transition hover:bg-[#5C150D] disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-orange"
           >
             {pending ? "Assigning…" : "Assign"}
           </button>

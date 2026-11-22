@@ -17,7 +17,7 @@ async function EvaluationContent({ params }: { params: Promise<{ id: string }> }
   const result = await getEvaluatorAssignment(id, evaluator.id);
   if (!result) notFound();
 
-  return <main id="main-content" className="flex-1 bg-white px-4 py-10 sm:px-6 sm:py-14"><div className="mx-auto max-w-3xl">
+  return <main id="main-content" className="flex-1 bg-white px-gutter py-ds-6 sm:py-ds-8"><div className="mx-auto w-full max-w-(--container-workspace)">
     <Link href="/evaluator" className="text-sm font-semibold text-ceda-burgundy underline underline-offset-4">← Back to my reviews</Link>
     <header className="mt-5"><p className="text-xs font-bold uppercase tracking-[0.18em] text-ceda-burgundy">{result.assignment.callTitle}</p><h1 className="mt-2 text-3xl font-bold text-ceda-ink">Evaluation · {result.assignment.stageName}</h1></header>
     <div className="mt-5"><SimilarIdeasAlert matches={result.similarIdeas} /></div>

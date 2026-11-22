@@ -1,52 +1,52 @@
 @import "tailwindcss";
 
 :root {
-  --background: #FFFFFF;
-  --foreground: #37231A;
+  --background: #ffffff;
+  --foreground: #37231a;
 
   /* CEDA Brand Design System Sampled from Reference (Preserved) */
-  --ceda-burgundy: #7A1F14;
-  --ceda-burgundy-dark: #5C150D;
-  --ceda-burgundy-light: #94291D;
-  --ceda-orange: #E8710A;
-  --ceda-orange-glow: #F38C30;
-  --ceda-peach: #F4B58A;
-  --ceda-peach-light: #FCEBDD;
-  --ceda-cream-start: #FFF9F4;
-  --ceda-cream-mid: #FFF1E4;
-  --ceda-cream-end: #F6DCCB;
-  --ceda-text-main: #331F17;
-  --ceda-text-body: #573E32;
-  --ceda-text-muted: #7F5E4E;
+  --ceda-burgundy: #7a1f14;
+  --ceda-burgundy-dark: #5c150d;
+  --ceda-burgundy-light: #94291d;
+  --ceda-orange: #e8710a;
+  --ceda-orange-glow: #f38c30;
+  --ceda-peach: #f4b58a;
+  --ceda-peach-light: #fcebdd;
+  --ceda-cream-start: #fff9f4;
+  --ceda-cream-mid: #fff1e4;
+  --ceda-cream-end: #f6dccb;
+  --ceda-text-main: #331f17;
+  --ceda-text-body: #573e32;
+  --ceda-text-muted: #7f5e4e;
   --ceda-border: rgba(122, 31, 20, 0.14);
-  --surface-muted: #F8F9FA;
+  --surface-muted: #f8f9fa;
 
   /* Tier 2: Semantic Status Surfaces & Inks */
-  --status-success-bg: #E8F5ED;
-  --status-success-border: #16803C;
-  --status-success-ink: #14532D;
-  --status-warning-bg: #FFF1E4;
-  --status-warning-border: #C56500;
-  --status-warning-ink: #7C3D00;
-  --status-danger-bg: #FFF5F4;
-  --status-danger-border: #B42318;
-  --status-danger-ink: #8B1D14;
-  --status-info-bg: #EEF0FA;
-  --status-info-border: #315EDB;
-  --status-info-ink: #1E3A8A;
+  --status-success-bg: #e8f5ed;
+  --status-success-border: #16803c;
+  --status-success-ink: #14532d;
+  --status-warning-bg: #fff1e4;
+  --status-warning-border: #c56500;
+  --status-warning-ink: #7c3d00;
+  --status-danger-bg: #fff5f4;
+  --status-danger-border: #b42318;
+  --status-danger-ink: #8b1d14;
+  --status-info-bg: #eef0fa;
+  --status-info-border: #315edb;
+  --status-info-ink: #1e3a8a;
 
   /* Tier 1: Custom Base Spacing Scale (4px rhythmic grid) */
-  --space-1: 0.25rem;   /* 4px */
-  --space-2: 0.5rem;    /* 8px */
-  --space-3: 0.75rem;   /* 12px */
-  --space-4: 1rem;      /* 16px */
-  --space-5: 1.25rem;   /* 20px */
-  --space-6: 1.5rem;    /* 24px */
-  --space-8: 2rem;      /* 32px */
-  --space-10: 2.5rem;   /* 40px */
-  --space-12: 3rem;     /* 48px */
-  --space-16: 4rem;     /* 64px */
-  --space-20: 5rem;     /* 80px */
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-8: 2rem; /* 32px */
+  --space-10: 2.5rem; /* 40px */
+  --space-12: 3rem; /* 48px */
+  --space-16: 4rem; /* 64px */
+  --space-20: 5rem; /* 80px */
 
   /* Tier 2 & 3: Semantic Fluid & Layout Spacing (WCAG 1.4.4 max/min <= 2.5x) */
   --space-gutter: clamp(1rem, 2.5vw, 2rem);
@@ -68,15 +68,15 @@
   --space-field: 0.375rem;
 
   /* Container Width Tokens */
-  --container-narrow: 44rem;     /* 704px — Auth, legal, focused reading */
+  --container-narrow: 44rem; /* 704px — Auth, legal, focused reading */
   --container-content: 68.75rem; /* 1100px — Forms, admin sub-pages */
-  --container-shell: 86.25rem;   /* 1380px — Public pages, navbar, footer */
-  --container-workspace: 90rem;  /* 1440px — Multi-column dashboards */
+  --container-shell: 86.25rem; /* 1380px — Public pages, navbar, footer */
+  --container-workspace: 90rem; /* 1440px — Multi-column dashboards */
 
   /* Shape & Radii Tokens */
   --radius-control: 0.625rem; /* 10px */
-  --radius-card: 1rem;        /* 16px */
-  --radius-panel: 1.5rem;     /* 24px */
+  --radius-card: 1rem; /* 16px */
+  --radius-panel: 1.5rem; /* 24px */
   --radius-pill: 9999px;
 
   /* Elevation & Shadow Tokens (warm CEDA ink tint) */
@@ -173,7 +173,14 @@ html {
 body {
   background-color: var(--background);
   color: var(--ceda-text-body);
-  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    var(--font-sans),
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
   overflow-x: clip;
 }
 
@@ -183,12 +190,17 @@ body {
 }
 
 @keyframes scrollBounce {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
     transform: translateY(6px);
   }
+}
+
+textarea {
+  resize: none;
 }
 
 .animate-scroll-bounce {
@@ -279,7 +291,9 @@ body {
   padding: 0.7rem 1.25rem;
   font-size: 0.925rem;
   font-weight: 700;
-  transition: background-color 150ms ease, color 150ms ease;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
 }
 
 .auth-primary {
@@ -288,8 +302,13 @@ body {
   color: #fff;
 }
 
-.auth-primary:hover:not(:disabled) { background: var(--ceda-burgundy-dark); }
-.auth-primary:disabled { cursor: wait; opacity: 0.65; }
+.auth-primary:hover:not(:disabled) {
+  background: var(--ceda-burgundy-dark);
+}
+.auth-primary:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
 
 .auth-secondary {
   border: 1px solid var(--ceda-border);
@@ -297,7 +316,9 @@ body {
   color: var(--ceda-burgundy);
 }
 
-.auth-secondary:hover:not(:disabled) { background: #fff8f3; }
+.auth-secondary:hover:not(:disabled) {
+  background: #fff8f3;
+}
 
 .social-auth-button {
   display: flex;
@@ -314,12 +335,26 @@ body {
   color: var(--ceda-text-main);
   font-size: 0.925rem;
   font-weight: 650;
-  transition: background-color 150ms ease, border-color 150ms ease;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
 }
-.social-auth-button:hover:not(:disabled) { border-color: var(--ceda-burgundy); background: #fff8f3; }
-.social-auth-button:disabled { cursor: default; }
-.social-auth-button:focus-visible { outline: 3px solid var(--ceda-orange); outline-offset: 2px; }
-.social-auth-logo { width: 1.25rem; height: 1.25rem; flex: none; }
+.social-auth-button:hover:not(:disabled) {
+  border-color: var(--ceda-burgundy);
+  background: #fff8f3;
+}
+.social-auth-button:disabled {
+  cursor: default;
+}
+.social-auth-button:focus-visible {
+  outline: 3px solid var(--ceda-orange);
+  outline-offset: 2px;
+}
+.social-auth-logo {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+}
 
 .auth-feedback {
   margin-top: 1.25rem;
@@ -332,8 +367,16 @@ body {
   line-height: 1.5;
 }
 
-.auth-feedback.error { border-color: #b42318; background: #fff5f4; color: #8b1d14; }
-.auth-feedback.success { border-color: #16803c; background: #f3fbf5; color: #14532d; }
+.auth-feedback.error {
+  border-color: #b42318;
+  background: #fff5f4;
+  color: #8b1d14;
+}
+.auth-feedback.success {
+  border-color: #16803c;
+  background: #f3fbf5;
+  color: #14532d;
+}
 
 .auth-card button:focus-visible,
 .auth-card a:focus-visible {
@@ -394,7 +437,10 @@ dialog.ds-dialog {
   background: var(--background);
   color: var(--ceda-text-body);
   box-shadow: var(--shadow-modal);
-  max-inline-size: min(calc(100vw - 2 * var(--space-gutter)), var(--dialog-max-width, 34rem));
+  max-inline-size: min(
+    calc(100vw - 2 * var(--space-gutter)),
+    var(--dialog-max-width, 34rem)
+  );
   inline-size: 100%;
   max-block-size: min(88dvh, 46rem);
   overflow: hidden;
@@ -486,7 +532,9 @@ dialog.ds-dialog[open]:where(:not([data-closing]))::backdrop {
   line-height: 1.45;
   cursor: pointer;
   user-select: none;
-  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
+  transition:
+    background-color var(--duration-fast) ease,
+    color var(--duration-fast) ease;
 }
 
 .ds-accordion summary::-webkit-details-marker {
@@ -509,7 +557,8 @@ dialog.ds-dialog[open]:where(:not([data-closing]))::backdrop {
   block-size: 1.125rem;
   flex-shrink: 0;
   background-color: currentColor;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat center / contain;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat center / contain;
   rotate: -90deg;
 }
 
@@ -563,9 +612,13 @@ dialog.ds-dialog[open]:where(:not([data-closing]))::backdrop {
   scroll-padding-inline: var(--fade-size);
   mask:
     linear-gradient(black, black) no-clip subtract,
-    linear-gradient(to var(--fade-dir), black, transparent) var(--fade-start-pos) 0 / var(--fade-start) 100% no-repeat no-clip,
-    linear-gradient(to var(--fade-dir), transparent, black) var(--fade-end-pos) 0 / var(--fade-end) 100% no-repeat no-clip;
-  transition: --fade-start 0.2s ease, --fade-end 0.2s ease;
+    linear-gradient(to var(--fade-dir), black, transparent)
+      var(--fade-start-pos) 0 / var(--fade-start) 100% no-repeat no-clip,
+    linear-gradient(to var(--fade-dir), transparent, black) var(--fade-end-pos)
+      0 / var(--fade-end) 100% no-repeat no-clip;
+  transition:
+    --fade-start 0.2s ease,
+    --fade-end 0.2s ease;
 }
 
 .ds-tablist::-webkit-scrollbar {
@@ -580,9 +633,13 @@ dialog.ds-dialog[open]:where(:not([data-closing]))::backdrop {
 
 @supports (animation-timeline: scroll(self inline)) {
   .ds-tablist {
-    animation: ds-reveal-fade-start linear both, ds-hide-fade-end linear both;
+    animation:
+      ds-reveal-fade-start linear both,
+      ds-hide-fade-end linear both;
     animation-timeline: scroll(self inline);
-    animation-range: 0 var(--fade-size), calc(100% - var(--fade-size)) 100%;
+    animation-range:
+      0 var(--fade-size),
+      calc(100% - var(--fade-size)) 100%;
   }
 }
 
@@ -621,7 +678,9 @@ dialog.ds-dialog[open]:where(:not([data-closing]))::backdrop {
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
-  transition: color var(--duration-fast) ease, background-color var(--duration-fast) ease;
+  transition:
+    color var(--duration-fast) ease,
+    background-color var(--duration-fast) ease;
 }
 
 .ds-tab:hover:not([aria-selected="true"]) {
@@ -802,7 +861,10 @@ dialog.ds-dialog[open]:where(:not([data-closing]))::backdrop {
   color: var(--ceda-text-main);
   font-size: max(1rem, 1em);
   line-height: 1.45;
-  transition: border-color var(--duration-fast) ease, background-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  transition:
+    border-color var(--duration-fast) ease,
+    background-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
 }
 
 .ds-input::placeholder {
@@ -852,7 +914,9 @@ select.ds-select {
 
 select.ds-select::picker-icon {
   color: var(--ceda-text-muted);
-  transition: transform 0.2s var(--ease-standard), color var(--duration-fast) ease;
+  transition:
+    transform 0.2s var(--ease-standard),
+    color var(--duration-fast) ease;
 }
 
 select.ds-select:hover:not(:disabled)::picker-icon,
@@ -905,7 +969,9 @@ select.ds-select option {
   font-size: 0.9375rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 110ms ease, color 110ms ease;
+  transition:
+    background-color 110ms ease,
+    color 110ms ease;
 }
 
 select.ds-select option:hover:not(:disabled) {
@@ -957,8 +1023,10 @@ select.ds-select option::checkmark {
   block-size: 1.625rem;
   border-radius: var(--radius-pill);
   border: 1px solid rgba(122, 31, 20, 0.3);
-  background-color: #E7DFDA;
-  transition: background-color var(--duration-fast) ease, border-color var(--duration-fast) ease;
+  background-color: #e7dfda;
+  transition:
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease;
 }
 
 .ds-switch[data-switch-fallback="true"]::before {
@@ -1075,7 +1143,7 @@ dialog.ds-drawer {
 }
 
 dialog.ds-drawer::backdrop {
-  background: #23130E;
+  background: #23130e;
   opacity: calc(var(--drawer-backdrop) * 0.52);
   overflow: hidden;
   overscroll-behavior: contain;
@@ -1115,7 +1183,7 @@ dialog.ds-drawer::backdrop {
   overscroll-behavior: contain;
   scroll-snap-align: start;
   scrollbar-width: thin;
-  background: #FCF8F5;
+  background: #fcf8f5;
   border-inline-end: 1px solid var(--ceda-border);
   box-shadow: var(--shadow-modal);
 }
@@ -1184,12 +1252,18 @@ dialog.ds-drawer::backdrop {
     inset: auto;
     margin-block-start: var(--space-2);
     position-area: block-end span-inline-end;
-    position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+    position-try-fallbacks:
+      flip-block,
+      flip-inline,
+      flip-block flip-inline;
   }
 
   .ds-menu-popover[data-menu-root="true"][data-align="end"] {
     position-area: block-end span-inline-start;
-    position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+    position-try-fallbacks:
+      flip-block,
+      flip-inline,
+      flip-block flip-inline;
   }
 
   .ds-menu-popover[data-submenu="true"] {
@@ -1224,7 +1298,9 @@ dialog.ds-drawer::backdrop {
   --bridge-slack: 6px;
   --bridge-side: sign(var(--pointer-x, 1px));
   --bridge-edge: calc(50% + var(--bridge-side) * (50% - 100vw));
-  --bridge-apex: calc(100vw + var(--pointer-x, 0px) + var(--bridge-side) * var(--bridge-slack));
+  --bridge-apex: calc(
+    100vw + var(--pointer-x, 0px) + var(--bridge-side) * var(--bridge-slack)
+  );
   clip-path: polygon(
     var(--bridge-apex) calc(100vh + var(--pointer-y, 0px) - var(--bridge-slack)),
     var(--bridge-edge) 100vh,
@@ -1235,9 +1311,18 @@ dialog.ds-drawer::backdrop {
 
 @supports not (width: calc(sign(1px) * 1px)) {
   .ds-menu-popover[data-submenu="true"][data-bridge]::before {
-    --bridge-edge: clamp(100vw, 50% + var(--pointer-x, 0px) * 1e6, 100% - 100vw);
+    --bridge-edge: clamp(
+      100vw,
+      50% + var(--pointer-x, 0px) * 1e6,
+      100% - 100vw
+    );
     --bridge-apex: calc(
-      100vw + var(--pointer-x, 0px) + clamp(-1 * var(--bridge-slack), var(--pointer-x, 0px) * 1e6, var(--bridge-slack))
+      100vw + var(--pointer-x, 0px) +
+        clamp(
+          -1 * var(--bridge-slack),
+          var(--pointer-x, 0px) * 1e6,
+          var(--bridge-slack)
+        )
     );
   }
 }
@@ -1303,7 +1388,9 @@ dialog.ds-drawer::backdrop {
   text-align: start;
   text-decoration: none;
   cursor: pointer;
-  transition: background-color 110ms ease, color 110ms ease;
+  transition:
+    background-color 110ms ease,
+    color 110ms ease;
 }
 
 .ds-menu-item:hover:not(:disabled),
@@ -1543,7 +1630,7 @@ dialog.ds-drawer::backdrop {
 }
 
 .site-drawer::backdrop {
-  background-color: #2E1B14;
+  background-color: #2e1b14;
   opacity: calc(var(--drawer-backdrop) * 0.48);
 }
 
@@ -1711,7 +1798,10 @@ dialog.ds-drawer::backdrop {
     margin: 0;
     margin-block-start: 0.5rem;
     position-area: block-end span-inline-start;
-    position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+    position-try-fallbacks:
+      flip-block,
+      flip-inline,
+      flip-block flip-inline;
   }
 }
 
@@ -1723,11 +1813,17 @@ dialog.ds-drawer::backdrop {
   }
 }
 
-.site-account-popover:not(:is(:popover-open, .\:popover-open, [data-popover-open="true"])) {
+.site-account-popover:not(
+  :is(:popover-open, .\:popover-open, [data-popover-open="true"])
+) {
   display: none;
 }
 
-.site-account-popover:is(:popover-open, .\:popover-open, [data-popover-open="true"]) {
+.site-account-popover:is(
+  :popover-open,
+  .\:popover-open,
+  [data-popover-open="true"]
+) {
   display: block;
 }
 
@@ -1743,7 +1839,11 @@ dialog.ds-drawer::backdrop {
     transition-behavior: allow-discrete;
   }
 
-  .site-account-popover:is(:popover-open, .\:popover-open, [data-popover-open="true"]) {
+  .site-account-popover:is(
+    :popover-open,
+    .\:popover-open,
+    [data-popover-open="true"]
+  ) {
     opacity: 1;
     translate: 0 0;
 
@@ -1947,14 +2047,16 @@ dialog.ds-drawer::backdrop {
     transform: scale(1);
     opacity: 0.7;
   }
-  70%, 100% {
+  70%,
+  100% {
     transform: scale(2.1);
     opacity: 0;
   }
 }
 
 @keyframes bentoFundingPacket {
-  0%, 6% {
+  0%,
+  6% {
     opacity: 0;
     transform: translateX(0) scale(0.7);
   }
@@ -1966,18 +2068,21 @@ dialog.ds-drawer::backdrop {
     opacity: 1;
     transform: translateX(38px) scale(0.95);
   }
-  32%, 100% {
+  32%,
+  100% {
     opacity: 0;
     transform: translateX(46px) scale(0.6);
   }
 }
 
 @keyframes bentoDoorReveal1 {
-  0%, 24% {
+  0%,
+  24% {
     opacity: 0.72;
     transform: translateX(-3px);
   }
-  34%, 88% {
+  34%,
+  88% {
     opacity: 1;
     transform: translateX(0);
   }
@@ -1988,11 +2093,13 @@ dialog.ds-drawer::backdrop {
 }
 
 @keyframes bentoDoorReveal2 {
-  0%, 36% {
+  0%,
+  36% {
     opacity: 0.72;
     transform: translateX(-3px);
   }
-  46%, 88% {
+  46%,
+  88% {
     opacity: 1;
     transform: translateX(0);
   }
@@ -2003,11 +2110,13 @@ dialog.ds-drawer::backdrop {
 }
 
 @keyframes bentoDoorReveal3 {
-  0%, 48% {
+  0%,
+  48% {
     opacity: 0.72;
     transform: translateX(-3px);
   }
-  58%, 88% {
+  58%,
+  88% {
     opacity: 1;
     transform: translateX(0);
   }
@@ -2018,33 +2127,40 @@ dialog.ds-drawer::backdrop {
 }
 
 @keyframes bentoReviewScan {
-  0%, 6% {
+  0%,
+  6% {
     opacity: 0;
     transform: translateY(0);
   }
-  12%, 28% {
+  12%,
+  28% {
     opacity: 1;
     transform: translateY(0);
   }
-  38%, 52% {
+  38%,
+  52% {
     opacity: 1;
     transform: translateY(2.85rem);
   }
-  62%, 76% {
+  62%,
+  76% {
     opacity: 1;
     transform: translateY(5.7rem);
   }
-  86%, 100% {
+  86%,
+  100% {
     opacity: 0;
     transform: translateY(5.7rem);
   }
 }
 
 @keyframes bentoRubricFill1 {
-  0%, 6% {
+  0%,
+  6% {
     transform: scaleX(0.18);
   }
-  24%, 86% {
+  24%,
+  86% {
     transform: scaleX(1);
   }
   100% {
@@ -2053,10 +2169,12 @@ dialog.ds-drawer::backdrop {
 }
 
 @keyframes bentoRubricFill2 {
-  0%, 28% {
+  0%,
+  28% {
     transform: scaleX(0.18);
   }
-  48%, 86% {
+  48%,
+  86% {
     transform: scaleX(1);
   }
   100% {
@@ -2065,10 +2183,12 @@ dialog.ds-drawer::backdrop {
 }
 
 @keyframes bentoRubricFill3 {
-  0%, 52% {
+  0%,
+  52% {
     transform: scaleX(0.18);
   }
-  72%, 86% {
+  72%,
+  86% {
     transform: scaleX(1);
   }
   100% {
@@ -2077,11 +2197,13 @@ dialog.ds-drawer::backdrop {
 }
 
 @keyframes bentoCheckPop1 {
-  0%, 18% {
+  0%,
+  18% {
     opacity: 0.25;
     transform: scale(0.75);
   }
-  26%, 86% {
+  26%,
+  86% {
     opacity: 1;
     transform: scale(1);
   }
@@ -2092,11 +2214,13 @@ dialog.ds-drawer::backdrop {
 }
 
 @keyframes bentoCheckPop2 {
-  0%, 42% {
+  0%,
+  42% {
     opacity: 0.25;
     transform: scale(0.75);
   }
-  50%, 86% {
+  50%,
+  86% {
     opacity: 1;
     transform: scale(1);
   }
@@ -2107,11 +2231,13 @@ dialog.ds-drawer::backdrop {
 }
 
 @keyframes bentoCheckPop3 {
-  0%, 66% {
+  0%,
+  66% {
     opacity: 0.25;
     transform: scale(0.75);
   }
-  74%, 86% {
+  74%,
+  86% {
     opacity: 1;
     transform: scale(1);
   }
@@ -2122,7 +2248,9 @@ dialog.ds-drawer::backdrop {
 }
 
 @keyframes bentoScorePulse {
-  0%, 70%, 100% {
+  0%,
+  70%,
+  100% {
     transform: scale(1);
   }
   78% {
@@ -2134,11 +2262,13 @@ dialog.ds-drawer::backdrop {
 }
 
 @keyframes bentoFeedbackNote {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
     opacity: 0.85;
   }
-  18%, 34% {
+  18%,
+  34% {
     transform: translateY(-2px);
     opacity: 1;
   }
@@ -2149,11 +2279,13 @@ dialog.ds-drawer::backdrop {
 }
 
 @keyframes bentoFeedbackFill {
-  0%, 48% {
+  0%,
+  48% {
     transform: scaleX(0.15);
     opacity: 0.45;
   }
-  66%, 88% {
+  66%,
+  88% {
     transform: scaleX(1);
     opacity: 1;
   }
@@ -2164,11 +2296,13 @@ dialog.ds-drawer::backdrop {
 }
 
 @keyframes bentoFeedbackBadge {
-  0%, 58% {
+  0%,
+  58% {
     opacity: 0.45;
     transform: scale(0.88);
   }
-  68%, 88% {
+  68%,
+  88% {
     opacity: 1;
     transform: scale(1);
   }
@@ -2179,37 +2313,45 @@ dialog.ds-drawer::backdrop {
 }
 
 @keyframes bentoChatMsg1 {
-  0%, 4% {
+  0%,
+  4% {
     opacity: 0;
     transform: translateY(8px);
   }
-  14%, 88% {
+  14%,
+  88% {
     opacity: 1;
     transform: translateY(0);
   }
-  96%, 100% {
+  96%,
+  100% {
     opacity: 0;
     transform: translateY(-4px);
   }
 }
 
 @keyframes bentoChatTyping {
-  0%, 16% {
+  0%,
+  16% {
     opacity: 0;
     transform: translateY(4px);
   }
-  22%, 38% {
+  22%,
+  38% {
     opacity: 1;
     transform: translateY(0);
   }
-  44%, 100% {
+  44%,
+  100% {
     opacity: 0;
     transform: translateY(-4px);
   }
 }
 
 @keyframes bentoTypingDot {
-  0%, 60%, 100% {
+  0%,
+  60%,
+  100% {
     transform: translateY(0);
     opacity: 0.4;
   }
@@ -2220,15 +2362,18 @@ dialog.ds-drawer::backdrop {
 }
 
 @keyframes bentoChatMsg2 {
-  0%, 38% {
+  0%,
+  38% {
     opacity: 0;
     transform: translateY(10px);
   }
-  48%, 88% {
+  48%,
+  88% {
     opacity: 1;
     transform: translateY(0);
   }
-  96%, 100% {
+  96%,
+  100% {
     opacity: 0;
     transform: translateY(-4px);
   }

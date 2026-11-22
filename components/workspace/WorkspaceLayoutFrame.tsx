@@ -5,20 +5,20 @@ import { WorkspaceShell } from "@/components/workspace/WorkspaceShell";
 
 function WorkspaceShellFallback({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-[#F7F8F9]">
+    <div className="flex min-h-screen bg-neutral-50">
       <aside
         aria-hidden="true"
-        className="hidden h-dvh w-[17rem] shrink-0 border-e border-ceda-line bg-[#FCF8F5] p-ds-4 lg:flex lg:flex-col lg:gap-ds-4"
+        className="hidden h-dvh w-68 shrink-0 border-e border-neutral-200 bg-white p-ds-4 lg:flex lg:flex-col lg:gap-ds-4"
       >
-        <div className="h-10 w-28 rounded-control bg-ceda-cream-mid/70" />
+        <div className="h-10 w-28 rounded-control bg-neutral-200 motion-safe:animate-pulse" />
         <div className="mt-ds-4 space-y-2">
-          <div className="h-9 w-full rounded-control bg-white/80" />
-          <div className="h-9 w-full rounded-control bg-white/60" />
-          <div className="h-9 w-4/5 rounded-control bg-white/60" />
+          <div className="h-9 w-full rounded-control bg-neutral-200/80 motion-safe:animate-pulse" />
+          <div className="h-9 w-full rounded-control bg-neutral-100 motion-safe:animate-pulse" />
+          <div className="h-9 w-4/5 rounded-control bg-neutral-100 motion-safe:animate-pulse" />
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="h-16 border-b border-ceda-line bg-white/90 px-gutter" />
+        <div className="h-16 border-b border-neutral-200 bg-white px-gutter" />
         <div className="flex flex-1 flex-col">{children}</div>
       </div>
     </div>

@@ -2,8 +2,6 @@ import Image from "next/image";
 
 const providers = [
   { id: "google", name: "Google", logo: "/assets/google.jpg" },
-  { id: "github", name: "GitHub", logo: "/assets/github.png" },
-  { id: "microsoft", name: "Microsoft", logo: "/assets/microsoft.png" },
 ];
 
 export function SocialAuthButtons() {

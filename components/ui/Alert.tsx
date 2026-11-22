@@ -131,7 +131,7 @@ export function Skeleton({ variant = "rect", className }: SkeletonProps) {
     <span
       aria-hidden="true"
       className={cn(
-        "block bg-gradient-to-r from-[#EFE8E3] via-[#F7F1EC] to-[#EFE8E3] motion-safe:animate-pulse",
+        "block bg-neutral-200/80 motion-safe:animate-pulse",
         variant === "text" && "h-4 w-full rounded-md",
         variant === "rect" && "h-24 w-full rounded-card",
         variant === "circle" && "h-12 w-12 rounded-full",

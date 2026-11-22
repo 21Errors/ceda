@@ -468,9 +468,13 @@ export const notifications = pgTable(
     title: varchar({ length: 255 }).notNull(),
     body: text(),
     readAt: timestamp({ withTimezone: true }),
+    archivedAt: timestamp({ withTimezone: true }),
     createdAt: createdAt(),
   },
-  (t) => [index("notifications_user_read_idx").on(t.userId, t.readAt)],
+  (t) => [
+    index("notifications_user_read_idx").on(t.userId, t.readAt),
+    index("notifications_user_archived_idx").on(t.userId, t.archivedAt),
+  ],
 );
 
 export const notificationPreferences = pgTable(

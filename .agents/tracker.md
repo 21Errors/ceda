@@ -14,7 +14,7 @@
 | **P0** | 2 | Role-Based Access Control (RBAC) | Mostly Done | Collaborator-level per-idea access rules |
 | **P0** | 3 | Dynamic Idea Submission Portal & File Uploads | Done | — |
 | **P0** | 4 | Multi-Level Evaluation, Adjudication & Iteration Workflow | Mostly Done | Adjudication rationale/history view & interactive E2E QA |
-| **P0** | 5 | Cloud Deployment & Live Hosted URL | In Progress | Deploy Next.js app to 24/7 cloud host; document region & storage costs |
+| **P0** | 5 | Cloud Deployment & Live Hosted URL | Done | — |
 | **P1** | 6 | Live Status Dashboard & Free Alert Subscriptions | Done | — |
 | **P1** | 7 | Live Support Chat System | Done | — |
 | **P1** | 8 | Admin Content, Form & Criteria Management | Done | — |
@@ -23,7 +23,7 @@
 | **P2** | 11 | FAQs, Regulatory Directory & Support Channels | Mostly Done | CEDA approval of demo turnaround targets |
 | **P2** | 12 | System Architecture, Responsiveness & Performance | Mostly Done | Cross-browser (Chrome/Edge/Firefox/Safari/mobile) & a11y QA |
 | **P3** | 13 | Innovation & Creativity Differentiators (10% Criteria) | Done | — |
-| **P3** | 14 | Technical Submission Deliverables & Packaging | In Progress | Live URL, final README/cost docs, build scripts, `< 150 MB` zip check |
+| **P3** | 14 | Technical Submission Deliverables & Packaging | Done | — |
 
 ---
 
@@ -148,5 +148,6 @@
 ### 14. Technical Submission Deliverables & Packaging
 - [x] Maintain clean, modular TypeScript codebase passing `npm run typecheck`, `npm run lint`, and `npm test`.
 - [x] Provide initial `README.md`, `docs/decisions.md`, `docs/build-log.md`, `docs/implementation-plan.md`, and `docs/demo-runbook.md`.
-- [ ] Provide **Live Hosted URL** in `README.md` and submission form.
-- [ ] Update `README.md` with complete architecture overview, Neon Object Storage setup, all required env vars, hosting region & cost breakdown, and full tools/frameworks list.
+- [x] Provide **Live Hosted URL** (`https://ceda-alpha.vercel.app/`) in `README.md` and submission form.
+- [x] Update `README.md` with complete architecture overview, Neon Object Storage setup, all required env vars, hosting region & cost breakdown, and full tools/frameworks list.
+- [x] Package deployment/installable build scripts (`Dockerfile`, `.dockerignore`, `vercel.json`, `.env.example`, `npm run verify`) and verify zipped submission bundle is strictly `< 150 MB` (7.18 MB).

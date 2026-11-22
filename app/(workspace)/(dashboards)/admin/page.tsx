@@ -1,14 +1,17 @@
-import Link from "next/link";
 import { Suspense } from "react";
+import { AdminCallsLedger } from "@/components/admin/overview/AdminCallsLedger";
+import { AdminKpiStrip } from "@/components/admin/overview/AdminKpiStrip";
+import { AdminOperationsPanel } from "@/components/admin/overview/AdminOperationsPanel";
+import { AdminOverviewHeader } from "@/components/admin/overview/AdminOverviewHeader";
+import { AdminPipelineSnapshot } from "@/components/admin/overview/AdminPipelineSnapshot";
+import { AdminRecentActivity } from "@/components/admin/overview/AdminRecentActivity";
 import { WorkspacePageSkeleton } from "@/components/workspace/WorkspacePageSkeleton";
 import { requireRole } from "@/lib/authorization";
-import { db } from "@/db";
-import { innovationCalls } from "@/db/schema";
-import { asc } from "drizzle-orm";
+import { loadAdminOverviewData } from "@/lib/server/admin-overview";
 
 export default function AdminPage() {
   return (
-    <Suspense fallback={<WorkspacePageSkeleton variant="list" />}>
+    <Suspense fallback={<WorkspacePageSkeleton variant="dashboard" />}>
       <AdminContent />
     </Suspense>
   );
@@ -16,138 +19,45 @@ export default function AdminPage() {
 
 async function AdminContent() {
   await requireRole("admin", "/admin");
-  const calls = await db
-    .select({
-      id: innovationCalls.id,
-      title: innovationCalls.title,
-      status: innovationCalls.status,
-      closesAt: innovationCalls.closesAt,
-    })
-    .from(innovationCalls)
-    .orderBy(asc(innovationCalls.createdAt));
+  const data = await loadAdminOverviewData();
 
   return (
-    <main
-      id="main-content"
-      className="flex-1 bg-white px-4 py-10 sm:px-6 sm:py-14">
-      <div className="mx-auto max-w-275">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-ceda-burgundy">
-              CEDA Innovation Portal
-            </p>
-            <h1 className="mt-2 text-3xl font-bold text-ceda-ink">
-              Portal administration
-            </h1>
-            <p className="mt-2 text-sm text-ceda-muted">
-              Manage innovation calls and their submission forms.
-            </p>
+    <main id="main-content" className="flex-1 bg-[#F7F8F9]">
+      <AdminOverviewHeader />
+
+      <div className="mx-auto max-w-(--container-workspace) space-y-ds-6 px-gutter py-ds-6 sm:py-ds-8">
+        <AdminKpiStrip
+          openCallsCount={data.openCallsCount}
+          activePipelineCount={data.activePipelineCount}
+          pendingReviewsCount={data.pendingReviewsCount}
+          totalUsersCount={data.totalUsersCount}
+        />
+
+        <div className="grid items-start gap-ds-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(20rem,1fr)]">
+          <div className="min-w-0 space-y-ds-6">
+            <AdminCallsLedger
+              calls={data.calls}
+              openCallsCount={data.openCallsCount}
+            />
+            <AdminRecentActivity entries={data.recentAudit} />
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/admin/users"
-              className="inline-flex min-h-11 w-fit items-center rounded-full border border-ceda-line bg-white px-5 text-sm font-bold text-ceda-burgundy hover:bg-[#FFF9F4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy">
-              Manage users and roles
-            </Link>
-            <Link
-              href="/admin/reviews"
-              className="inline-flex min-h-11 w-fit items-center rounded-full border border-ceda-line bg-white px-5 text-sm font-bold text-ceda-burgundy hover:bg-[#FFF9F4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy">
-              Review pipeline
-            </Link>
-            <Link
-              href="/admin/awards"
-              className="inline-flex min-h-11 w-fit items-center rounded-full border border-ceda-line bg-white px-5 text-sm font-bold text-ceda-burgundy hover:bg-[#FFF9F4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy">
-              Grant awards
-            </Link>
-            <Link
-              href="/admin/content/faqs"
-              className="inline-flex min-h-11 w-fit items-center rounded-full border border-ceda-line bg-white px-5 text-sm font-bold text-ceda-burgundy hover:bg-[#FFF9F4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy">
-              Manage FAQs
-            </Link>
-            <Link
-              href="/admin/content/documents"
-              className="inline-flex min-h-11 w-fit items-center rounded-full border border-ceda-line bg-white px-5 text-sm font-bold text-ceda-burgundy hover:bg-[#FFF9F4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy">
-              Document templates
-            </Link>
-            <Link
-              href="/admin/content/pages"
-              className="inline-flex min-h-11 w-fit items-center rounded-full border border-ceda-line bg-white px-5 text-sm font-bold text-ceda-burgundy hover:bg-[#FFF9F4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy">
-              Pages &amp; news
-            </Link>
-            <Link
-              href="/admin/audit"
-              className="inline-flex min-h-11 w-fit items-center rounded-full border border-ceda-line bg-white px-5 text-sm font-bold text-ceda-burgundy hover:bg-[#FFF9F4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy">
-              View audit trail
-            </Link>
-            <Link
-              href="/admin/reports"
-              className="inline-flex min-h-11 w-fit items-center rounded-full border border-ceda-line bg-white px-5 text-sm font-bold text-ceda-burgundy hover:bg-[#FFF9F4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy">
-              View reports
-            </Link>
-            <Link
-              href="/admin/calls/new"
-              className="inline-flex min-h-11 w-fit items-center rounded-full bg-ceda-burgundy px-5 text-sm font-bold text-white hover:bg-[#5C150D] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy">
-              Create a call
-            </Link>
-          </div>
+
+          <aside aria-label="Portal operations and submission pipeline" className="space-y-ds-6">
+            <AdminOperationsPanel
+              totalUsersCount={data.totalUsersCount}
+              activePipelineCount={data.activePipelineCount}
+              awardsCount={data.awardsCount}
+              activeCategoriesCount={data.activeCategoriesCount}
+              publishedFaqsCount={data.publishedFaqsCount}
+              publishedDocumentsCount={data.publishedDocumentsCount}
+              publishedPagesCount={data.publishedPagesCount}
+            />
+            <AdminPipelineSnapshot
+              breakdown={data.pipelineBreakdown}
+              totalSubmissions={data.totalSubmissions}
+            />
+          </aside>
         </div>
-        <section className="mt-8" aria-labelledby="calls-heading">
-          <h2 id="calls-heading" className="text-xl font-bold text-ceda-ink">
-            Innovation calls
-          </h2>
-          {calls.length ? (
-            <div className="mt-4 space-y-3">
-              {calls.map((call) => (
-                <Link
-                  key={call.id}
-                  href={`/admin/calls/${call.id}`}
-                  className="flex flex-col gap-3 rounded-2xl border border-ceda-line bg-white p-5 shadow-sm transition hover:shadow-md sm:flex-row sm:items-center sm:justify-between">
-                  <span>
-                    <span className="block font-semibold text-ceda-ink">
-                      {call.title}
-                    </span>
-                    <span className="mt-1 block text-sm capitalize text-ceda-muted">
-                      {call.status}
-                      {call.closesAt
-                        ? ` · closes ${call.closesAt.toLocaleDateString("en-BW", { dateStyle: "medium", timeZone: "Africa/Gaborone" })}`
-                        : ""}
-                    </span>
-                  </span>
-                  <span className="text-sm font-semibold text-ceda-burgundy">
-                    Configure call →
-                  </span>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="mt-4 rounded-2xl border border-ceda-line bg-[#FFF9F4] p-6 text-sm text-ceda-body">
-              No calls are configured yet.
-            </div>
-          )}
-        </section>
-        <section className="mt-9 rounded-2xl bg-[#FFF9F4] p-6">
-          <h2 className="font-bold text-ceda-ink">Configuration and reports</h2>
-          <p className="mt-2 text-sm leading-6 text-ceda-muted">
-            <Link
-              href="/admin/categories"
-              className="font-semibold text-ceda-burgundy underline underline-offset-4">
-              Manage submission categories
-            </Link>
-            ,{" "}
-            <Link
-              href="/admin/content/documents"
-              className="font-semibold text-ceda-burgundy underline underline-offset-4">
-              upload downloadable document templates
-            </Link>
-            , or{" "}
-            <Link
-              href="/admin/content/pages"
-              className="font-semibold text-ceda-burgundy underline underline-offset-4">
-              edit public guidelines &amp; announcements
-            </Link>
-            .
-          </p>
-        </section>
       </div>
     </main>
   );

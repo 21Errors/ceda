@@ -19,7 +19,6 @@ export type NavIconKey =
   | "pages"
   | "reports"
   | "audit"
-  | "notifications"
   | "profile"
   | "settings";
 
@@ -148,8 +147,8 @@ const ALL_NAV_GROUPS: readonly WorkspaceNavGroup[] = [
     ],
   },
   {
-    id: "administration",
-    label: "Administration",
+    id: "admin-programmes",
+    label: "Calls & Reviews",
     items: [
       {
         id: "admin-overview",
@@ -160,17 +159,10 @@ const ALL_NAV_GROUPS: readonly WorkspaceNavGroup[] = [
         roles: ["admin"],
       },
       {
-        id: "admin-calls-new",
-        label: "New Innovation Call",
-        href: "/admin/calls/new",
+        id: "admin-calls",
+        label: "Innovation Calls",
+        href: "/admin/calls",
         icon: "calls",
-        roles: ["admin"],
-      },
-      {
-        id: "admin-users",
-        label: "Users & Roles",
-        href: "/admin/users",
-        icon: "users",
         roles: ["admin"],
       },
       {
@@ -187,6 +179,12 @@ const ALL_NAV_GROUPS: readonly WorkspaceNavGroup[] = [
         icon: "awards",
         roles: ["admin"],
       },
+    ],
+  },
+  {
+    id: "admin-content",
+    label: "Portal Content",
+    items: [
       {
         id: "admin-categories",
         label: "Categories",
@@ -215,6 +213,19 @@ const ALL_NAV_GROUPS: readonly WorkspaceNavGroup[] = [
         icon: "pages",
         roles: ["admin"],
       },
+    ],
+  },
+  {
+    id: "admin-governance",
+    label: "Governance",
+    items: [
+      {
+        id: "admin-users",
+        label: "Users & Roles",
+        href: "/admin/users",
+        icon: "users",
+        roles: ["admin"],
+      },
       {
         id: "admin-reports",
         label: "Reports & Analytics",
@@ -236,12 +247,6 @@ const ALL_NAV_GROUPS: readonly WorkspaceNavGroup[] = [
     label: "Account",
     items: [
       {
-        id: "notifications",
-        label: "Notifications",
-        href: "/notifications",
-        icon: "notifications",
-      },
-      {
         id: "profile",
         label: "My Profile",
         href: "/profile",
@@ -259,23 +264,14 @@ const ALL_NAV_GROUPS: readonly WorkspaceNavGroup[] = [
 
 export function getNavigationForRoles(
   userRoles: readonly PortalRole[],
-  unreadNotifications = 0,
 ): WorkspaceNavGroup[] {
   const roleSet = new Set<PortalRole>(userRoles);
   const groups: WorkspaceNavGroup[] = [];
 
   for (const group of ALL_NAV_GROUPS) {
-    const visibleItems = group.items
-      .filter((item) => !item.roles || item.roles.some((role) => roleSet.has(role)))
-      .map((item) => {
-        if (item.id === "notifications" && unreadNotifications > 0) {
-          return {
-            ...item,
-            badge: unreadNotifications > 99 ? "99+" : String(unreadNotifications),
-          };
-        }
-        return item;
-      });
+    const visibleItems = group.items.filter(
+      (item) => !item.roles || item.roles.some((role) => roleSet.has(role)),
+    );
 
     if (visibleItems.length > 0) {
       groups.push({ id: group.id, label: group.label, items: visibleItems });
@@ -308,9 +304,6 @@ export function isNavItemActive(pathname: string, item: WorkspaceNavItem): boole
   }
   if (item.href === "/dashboard") {
     return pathname === "/dashboard" || pathname.startsWith("/dashboard/");
-  }
-  if (item.href === "/admin/calls/new") {
-    return pathname === "/admin/calls/new" || pathname.startsWith("/admin/calls/");
   }
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }

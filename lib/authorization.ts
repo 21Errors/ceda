@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { getPrimaryWorkspaceHref } from "@/lib/navigation";
 import { db } from "@/db";
 import { roles, userRoles } from "@/db/schema";
 
@@ -39,4 +40,22 @@ export async function requireRole(requiredRole: PortalRole, returnTo: string) {
 
   if (!assignedRoles.includes(requiredRole)) redirect("/forbidden");
   return user;
+}
+
+export async function redirectIfAuthenticated(nextPath?: string | null) {
+  const session = await getCurrentSession();
+  if (!session?.user) return;
+
+  if (
+    nextPath &&
+    nextPath.startsWith("/") &&
+    !nextPath.startsWith("//") &&
+    !nextPath.startsWith("/login") &&
+    !nextPath.startsWith("/signup")
+  ) {
+    redirect(nextPath);
+  }
+
+  const assignedRoles = await getUserRoles(session.user.id);
+  redirect(getPrimaryWorkspaceHref(assignedRoles));
 }

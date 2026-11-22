@@ -264,7 +264,7 @@ export function LoginForm() {
       </div>
       <SocialAuthButtons />
       <button
-        className="auth-secondary w-full"
+        className="auth-secondary mt-3 w-full"
         type="button"
         onClick={signInWithPasskey}
         disabled={pending}

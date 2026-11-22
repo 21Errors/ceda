@@ -1,22 +1,22 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowLeft, CheckCircle2, LockKeyhole, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, Bell, FileEdit, ShieldCheck } from "lucide-react";
 
 const AUTH_HIGHLIGHTS = [
   {
-    title: "Multi-modal secure access",
-    description: "Sign in with verified credentials, hashed 6-digit email OTPs, or passkey biometrics.",
-    Icon: LockKeyhole,
+    title: "Work at your own pace",
+    description: "Save your idea as a draft and come back to finish it whenever you are ready.",
+    Icon: FileEdit,
   },
   {
-    title: "Transparent 5-stage pipeline",
-    description: "Follow your innovation from draft submission through evaluation, feedback, and award.",
-    Icon: Sparkles,
+    title: "Follow your progress",
+    description: "See clear updates at every step and read helpful feedback from our team.",
+    Icon: Bell,
   },
   {
-    title: "Botswana DPA 2024 aligned",
-    description: "Purpose-limited collection, immutable audit trails, and encrypted document storage.",
+    title: "Your idea stays private",
+    description: "Only you and the CEDA review team can see your idea and your documents.",
     Icon: ShieldCheck,
   },
 ] as const;
@@ -27,7 +27,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       {/* Brand Editorial Panel (Desktop) */}
       <aside
         aria-label="About CEDA Innovation Portal"
-        className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-ceda-burgundy-dark via-ceda-burgundy to-[#3E120D] p-ds-10 text-white lg:flex xl:p-ds-12"
+        className="relative hidden flex-col justify-between overflow-hidden bg-linear-to-br from-ceda-burgundy-dark via-ceda-burgundy to-[#3E120D] p-ds-10 text-white lg:flex xl:p-ds-12"
       >
         {/* Subtle CEDA geometric texture & warm glow */}
         <div
@@ -65,10 +65,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             CEDA Innovation Portal
           </p>
           <h2 className="mt-ds-3 max-w-md text-3xl font-black leading-tight tracking-tight text-white xl:text-4xl">
-            Citizen innovation, governed with clarity.
+            Share your ideas and grow with CEDA.
           </h2>
           <p className="mt-ds-4 max-w-md text-sm leading-7 text-white/80">
-            Access your role workspace to submit breakthrough proposals, score applications, coordinate adjudication, or support citizen entrepreneurs across Botswana.
+            Sign in to submit your idea, follow your progress and check your application status.
           </p>
 
           <ul className="mt-ds-8 space-y-ds-5">
@@ -88,7 +88,6 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
         <div className="relative z-10 mt-ds-10 flex flex-wrap items-center justify-between gap-ds-3 border-t border-white/15 pt-ds-5 text-xs text-white/70">
           <span className="inline-flex items-center gap-1.5">
-            <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5 text-ceda-peach" />
             Citizen Entrepreneurial Development Agency
           </span>
           <div className="flex items-center gap-ds-4">
