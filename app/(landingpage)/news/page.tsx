@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { io } from "next/cache";
 import { Suspense } from "react";
 import {
   ArrowRight,
@@ -58,6 +59,7 @@ const stories = [
 ];
 
 async function PortalAnnouncementsSection() {
+  await io();
   const blocks = await getAllContentBlocks();
   const announcements = getPublishedNewsAnnouncements(blocks);
   if (!announcements.length) return null;

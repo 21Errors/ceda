@@ -1,12 +1,20 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import type { ReactNode } from "react";
 import { ShieldCheck } from "lucide-react";
+import { PageStub } from "@/components/PageStub";
 import { GlobalSupportActions } from "@/components/GlobalSupportActions";
 import { SubmissionStudioHeader } from "@/components/submissions/SubmissionStudioHeader";
 import { WorkspaceLayoutFrame } from "@/components/workspace/WorkspaceLayoutFrame";
 import { getCurrentSession, getUserRoles } from "@/lib/authorization";
 
-export default async function SubmissionsLayout({ children }: { children: ReactNode }) {
+export default function SubmissionsLayout({ children }: { children: ReactNode }) {
+  return <Suspense fallback={<PageStub title="Innovation submission" description="Loading your workspace..." />}>
+    <SubmissionsLayoutContent>{children}</SubmissionsLayoutContent>
+  </Suspense>;
+}
+
+async function SubmissionsLayoutContent({ children }: { children: ReactNode }) {
   const session = await getCurrentSession();
   const roles = session?.user ? await getUserRoles(session.user.id) : [];
   if (roles.includes("submitter")) return <WorkspaceLayoutFrame>{children}</WorkspaceLayoutFrame>;

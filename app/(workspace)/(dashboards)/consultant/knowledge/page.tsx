@@ -1,8 +1,18 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { requireRole } from "@/lib/authorization";
+import { WorkspacePageSkeleton } from "@/components/workspace/WorkspacePageSkeleton";
 import { submitFaqSuggestion } from "@/app/(workspace)/(dashboards)/consultant/knowledge-actions";
 
-export default async function ConsultantKnowledgePage({ searchParams }: PageProps<"/consultant/knowledge">) {
+type ConsultantKnowledgePageProps = Pick<PageProps<"/consultant/knowledge">, "searchParams">;
+
+export default function ConsultantKnowledgePage({ searchParams }: ConsultantKnowledgePageProps) {
+  return <Suspense fallback={<WorkspacePageSkeleton variant="form" />}>
+    <ConsultantKnowledgeContent searchParams={searchParams} />
+  </Suspense>;
+}
+
+async function ConsultantKnowledgeContent({ searchParams }: ConsultantKnowledgePageProps) {
   await requireRole("consultant", "/consultant/knowledge");
   const query = await searchParams;
   const notice = Array.isArray(query.notice) ? query.notice[0] : query.notice;

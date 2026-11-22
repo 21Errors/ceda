@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { io } from "next/cache";
 import { Suspense } from "react";
 import { ArrowRight, BookOpen, Download, FileText } from "lucide-react";
 import { getAttachmentTypeLabel } from "@/lib/attachments";
@@ -28,6 +29,9 @@ export default function GuidelinesPage() {
 }
 
 async function GuidelinesContent() {
+  // The Neon/Drizzle query path can use randomness internally. Keep it out of
+  // the static shell because this content is read from the database per request.
+  await io();
   const [blocks, publishedDocs] = await Promise.all([
     getAllContentBlocks(),
     getPublishedPortalDocuments(),
