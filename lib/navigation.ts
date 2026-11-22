@@ -15,6 +15,8 @@ export type NavIconKey =
   | "awards"
   | "categories"
   | "faqs"
+  | "documents"
+  | "pages"
   | "reports"
   | "audit"
   | "notifications"
@@ -200,6 +202,20 @@ const ALL_NAV_GROUPS: readonly WorkspaceNavGroup[] = [
         roles: ["admin"],
       },
       {
+        id: "admin-documents",
+        label: "Document Templates",
+        href: "/admin/content/documents",
+        icon: "documents",
+        roles: ["admin"],
+      },
+      {
+        id: "admin-pages",
+        label: "Pages & News",
+        href: "/admin/content/pages",
+        icon: "pages",
+        roles: ["admin"],
+      },
+      {
         id: "admin-reports",
         label: "Reports & Analytics",
         href: "/admin/reports",
@@ -318,6 +334,8 @@ const SEGMENT_LABELS: Record<string, string> = {
   categories: "Categories",
   content: "Content",
   faqs: "FAQs",
+  documents: "Document Templates",
+  pages: "Pages & News",
   reports: "Reports",
   audit: "Audit Trail",
   account: "Account",

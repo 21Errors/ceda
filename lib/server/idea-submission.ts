@@ -3,6 +3,7 @@ import "server-only";
 import { and, asc, desc, eq, gte, isNotNull, isNull, lte, or } from "drizzle-orm";
 import { db } from "@/db";
 import {
+  adjudications,
   categories,
   awards,
   criteria,
@@ -213,6 +214,26 @@ export async function getSubmitterAwards(ideaId: string, submitterId: string) {
     .innerJoin(ideas, eq(awards.ideaId, ideas.id))
     .where(and(eq(ideas.id, ideaId), eq(ideas.submitterId, submitterId)))
     .orderBy(asc(awards.awardedAt));
+}
+
+export async function getSubmitterAdjudications(ideaId: string, submitterId: string) {
+  return db
+    .select({
+      id: adjudications.id,
+      decision: adjudications.decision,
+      rationale: adjudications.rationale,
+      decidedAt: adjudications.decidedAt,
+      versionNo: ideaVersions.versionNo,
+      stageName: workflowStages.name,
+      adjudicatorName: user.name,
+    })
+    .from(adjudications)
+    .innerJoin(ideas, eq(adjudications.ideaId, ideas.id))
+    .innerJoin(user, eq(adjudications.adjudicatorId, user.id))
+    .leftJoin(ideaVersions, eq(adjudications.ideaVersionId, ideaVersions.id))
+    .leftJoin(workflowStages, eq(adjudications.stageId, workflowStages.id))
+    .where(and(eq(ideas.id, ideaId), eq(ideas.submitterId, submitterId)))
+    .orderBy(desc(adjudications.decidedAt));
 }
 
 export async function getSubmissionFields(callId: string) {

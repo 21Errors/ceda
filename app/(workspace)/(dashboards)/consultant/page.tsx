@@ -1,33 +1,39 @@
 import { Suspense } from "react";
-import { asc, desc, inArray } from "drizzle-orm";
 import { WorkspacePageSkeleton } from "@/components/workspace/WorkspacePageSkeleton";
 import { ChatQueue } from "@/components/consultant/ChatQueue";
-import { db } from "@/db";
-import { chatConversations } from "@/db/schema";
 import { requireRole } from "@/lib/authorization";
+import {
+  getChatAnalyticsSummary,
+  getConsultantQueueData,
+  getLiveDeskAvailability,
+} from "@/lib/server/chat-service";
 
-export default function ConsultantPage() {
+export default function ConsultantPage({
+  searchParams,
+}: PageProps<"/consultant">) {
   return (
     <Suspense fallback={<WorkspacePageSkeleton variant="list" />}>
-      <ConsultantContent />
+      <ConsultantContent searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function ConsultantContent() {
-  await requireRole("consultant", "/consultant");
-  const conversations = await db
-    .select({
-      id: chatConversations.id,
-      requesterId: chatConversations.requesterId,
-      agentId: chatConversations.agentId,
-      status: chatConversations.status,
-      startedAt: chatConversations.startedAt,
-    })
-    .from(chatConversations)
-    .where(inArray(chatConversations.status, ["waiting", "active"]))
-    .orderBy(desc(chatConversations.status), asc(chatConversations.startedAt))
-    .limit(200);
+async function ConsultantContent({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const consultant = await requireRole("consultant", "/consultant");
+  const [queue, availability, analytics, query] = await Promise.all([
+    getConsultantQueueData(consultant.id),
+    getLiveDeskAvailability(),
+    getChatAnalyticsSummary(),
+    searchParams,
+  ]);
+
+  const rawSelected = Array.isArray(query.conversation)
+    ? query.conversation[0]
+    : query.conversation;
 
   return (
     <main
@@ -41,14 +47,17 @@ async function ConsultantContent() {
           Consultant chat queue
         </h1>
         <p className="mt-2 text-sm leading-6 text-ceda-muted">
-          Claim a waiting conversation to reply. The service desk operates
-          weekdays from 09:00 to 16:00 CAT; offline messages remain queued.
+          Claim a waiting conversation to reply. Your active assigned chats stay
+          pinned across page refreshes. The service desk operates weekdays from
+          09:00 to 16:00 CAT (excluding Botswana public holidays).
         </p>
+
         <ChatQueue
-          conversations={conversations.map((conversation) => ({
-            ...conversation,
-            startedAt: conversation.startedAt.toISOString(),
-          }))}
+          currentUserId={consultant.id}
+          initialSelectedId={rawSelected ?? ""}
+          initialQueue={queue}
+          initialAvailability={availability}
+          initialAnalytics={analytics}
         />
       </div>
     </main>

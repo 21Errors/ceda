@@ -42,6 +42,8 @@ describe("RBAC workspace navigation", () => {
       "/admin/awards",
       "/admin/categories",
       "/admin/content/faqs",
+      "/admin/content/documents",
+      "/admin/content/pages",
       "/admin/reports",
       "/admin/audit",
     ]);

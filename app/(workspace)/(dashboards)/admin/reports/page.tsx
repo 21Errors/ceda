@@ -10,6 +10,8 @@ import {
   user,
 } from "@/db/schema";
 import { requireRole } from "@/lib/authorization";
+import { formatDurationSeconds } from "@/lib/chat-analytics-calc";
+import { getChatAnalyticsSummary } from "@/lib/server/chat-service";
 
 export default function AdminReportsPage() {
   return (
@@ -21,30 +23,32 @@ export default function AdminReportsPage() {
 
 async function ReportsContent() {
   await requireRole("admin", "/admin/reports");
-  const [totalRows, statusRows, callRows, workloadRows] = await Promise.all([
-    db.select({ total: count() }).from(ideas),
-    db
-      .select({ status: ideas.status, total: count() })
-      .from(ideas)
-      .groupBy(ideas.status),
-    db
-      .select({ callTitle: innovationCalls.title, total: count() })
-      .from(ideas)
-      .innerJoin(innovationCalls, eq(ideas.callId, innovationCalls.id))
-      .groupBy(innovationCalls.id, innovationCalls.title)
-      .orderBy(desc(count()))
-      .limit(10),
-    db
-      .select({
-        evaluatorName: user.name,
-        status: evaluatorAssignments.status,
-        total: count(),
-      })
-      .from(evaluatorAssignments)
-      .innerJoin(user, eq(evaluatorAssignments.evaluatorId, user.id))
-      .groupBy(user.id, user.name, evaluatorAssignments.status)
-      .orderBy(user.name),
-  ]);
+  const [totalRows, statusRows, callRows, workloadRows, chatAnalytics] =
+    await Promise.all([
+      db.select({ total: count() }).from(ideas),
+      db
+        .select({ status: ideas.status, total: count() })
+        .from(ideas)
+        .groupBy(ideas.status),
+      db
+        .select({ callTitle: innovationCalls.title, total: count() })
+        .from(ideas)
+        .innerJoin(innovationCalls, eq(ideas.callId, innovationCalls.id))
+        .groupBy(innovationCalls.id, innovationCalls.title)
+        .orderBy(desc(count()))
+        .limit(10),
+      db
+        .select({
+          evaluatorName: user.name,
+          status: evaluatorAssignments.status,
+          total: count(),
+        })
+        .from(evaluatorAssignments)
+        .innerJoin(user, eq(evaluatorAssignments.evaluatorId, user.id))
+        .groupBy(user.id, user.name, evaluatorAssignments.status)
+        .orderBy(user.name),
+      getChatAnalyticsSummary(),
+    ]);
   const total = Number(totalRows[0]?.total ?? 0);
   const statuses = new Map(
     statusRows.map((row) => [row.status, Number(row.total)]),
@@ -186,6 +190,99 @@ async function ReportsContent() {
             )}
           </section>
         </div>
+
+        <section
+          className="mt-10 border-t border-ceda-line pt-8"
+          aria-labelledby="chat-analytics-heading">
+          <h2
+            id="chat-analytics-heading"
+            className="text-xl font-bold text-ceda-ink">
+            Live support chat analytics
+          </h2>
+          <p className="mt-1 text-sm text-ceda-muted">
+            Support volume, first-response times, and resolution metrics across
+            service desk conversations.
+          </p>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                label: "Total conversations",
+                value: String(chatAnalytics.totalConversations),
+                detail: `${chatAnalytics.conversationsLast7Days} in last 7 days · ${chatAnalytics.totalMessages} messages`,
+              },
+              {
+                label: "Current queue",
+                value: `${chatAnalytics.waitingCount} waiting`,
+                detail: `${chatAnalytics.activeCount} active · ${chatAnalytics.closedCount} resolved`,
+              },
+              {
+                label: "Avg first response",
+                value: formatDurationSeconds(
+                  chatAnalytics.averageFirstResponseSeconds,
+                ),
+                detail: `Median ${formatDurationSeconds(chatAnalytics.medianFirstResponseSeconds)}`,
+              },
+              {
+                label: "Resolution rate",
+                value:
+                  chatAnalytics.resolutionRatePercent !== null
+                    ? `${chatAnalytics.resolutionRatePercent}%`
+                    : "—",
+                detail: `Avg resolution ${formatDurationSeconds(chatAnalytics.averageResolutionSeconds)}`,
+              },
+            ].map((card) => (
+              <article
+                key={card.label}
+                className="rounded-2xl border border-ceda-line bg-[#FFF9F4] p-5">
+                <p className="text-sm text-ceda-muted">{card.label}</p>
+                <p className="mt-2 text-2xl font-bold text-ceda-ink">
+                  {card.value}
+                </p>
+                <p className="mt-1 text-xs text-ceda-muted">{card.detail}</p>
+              </article>
+            ))}
+          </div>
+
+          {chatAnalytics.consultantBreakdown.length > 0 && (
+            <div className="mt-5 overflow-x-auto rounded-xl border border-ceda-line">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-[#FFF9F4] text-xs text-ceda-muted">
+                  <tr>
+                    <th scope="col" className="p-3">
+                      Consultant
+                    </th>
+                    <th scope="col" className="p-3">
+                      Active chats
+                    </th>
+                    <th scope="col" className="p-3">
+                      Resolved
+                    </th>
+                    <th scope="col" className="p-3">
+                      Avg first response
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-ceda-line">
+                  {chatAnalytics.consultantBreakdown.map((row) => (
+                    <tr key={row.agentId}>
+                      <th
+                        scope="row"
+                        className="p-3 font-semibold text-ceda-ink">
+                        {row.agentName}
+                      </th>
+                      <td className="p-3">{row.activeChats}</td>
+                      <td className="p-3">{row.resolvedChats}</td>
+                      <td className="p-3">
+                        {formatDurationSeconds(row.averageFirstResponseSeconds)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );

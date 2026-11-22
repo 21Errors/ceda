@@ -15,11 +15,27 @@ import {
   getActiveCategories,
   getPublicIdeaFeedback,
   getSubmissionFields,
+  getSubmitterAdjudications,
   getSubmitterAwards,
   getSubmitterEvaluationFeedback,
   getSubmitterIdea,
   getSubmitterStageHistory,
 } from "@/lib/server/idea-submission";
+
+const ADJUDICATION_DECISION_META = {
+  approved: {
+    label: "Approved",
+    badgeClass: "bg-emerald-50 text-emerald-900 border-emerald-200",
+  },
+  needs_revision: {
+    label: "Changes requested",
+    badgeClass: "bg-amber-50 text-amber-950 border-amber-200",
+  },
+  rejected: {
+    label: "Not approved",
+    badgeClass: "bg-red-50 text-red-900 border-red-200",
+  },
+} as const;
 
 function AnswerContent({ value }: { value: unknown }) {
   if (Array.isArray(value)) return <>{value.join(", ")}</>;
@@ -72,6 +88,7 @@ async function SubmissionDetail({
     history,
     publicFeedback,
     evaluationFeedback,
+    adjudicationHistory,
     userAwards,
     versionAttachments,
     fields,
@@ -80,6 +97,7 @@ async function SubmissionDetail({
     getSubmitterStageHistory(id, user.id),
     getPublicIdeaFeedback(id, user.id),
     getSubmitterEvaluationFeedback(id, user.id),
+    getSubmitterAdjudications(id, user.id),
     getSubmitterAwards(id, user.id),
     getVersionAttachments(idea.currentVersionId),
     idea.status === "changes_requested"
@@ -258,6 +276,58 @@ async function SubmissionDetail({
                   </span>
                 </li>
               ))}
+            </ol>
+          </section>
+        )}
+        {adjudicationHistory.length > 0 && (
+          <section
+            className="mt-6 rounded-2xl border border-ceda-line bg-white p-6 sm:p-8"
+            aria-labelledby="adjudication-history-heading">
+            <h2
+              id="adjudication-history-heading"
+              className="text-xl font-bold text-ceda-ink">
+              Adjudication decisions
+            </h2>
+            <p className="mt-1 text-sm text-ceda-muted">
+              Formal adjudication outcomes and written rationale recorded for
+              this submission.
+            </p>
+            <ol className="mt-4 space-y-4">
+              {adjudicationHistory.map((item) => {
+                const meta = ADJUDICATION_DECISION_META[item.decision];
+                return (
+                  <li
+                    key={item.id}
+                    className="rounded-xl border border-ceda-line bg-[#FFFDFC] p-4 sm:p-5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span
+                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${meta.badgeClass}`}>
+                        {meta.label}
+                      </span>
+                      <span className="text-xs text-ceda-muted">
+                        {item.stageName ? `${item.stageName} · ` : ""}
+                        {item.versionNo ? `Version ${item.versionNo} · ` : ""}
+                        {item.decidedAt.toLocaleDateString("en-BW", {
+                          dateStyle: "medium",
+                          timeZone: "Africa/Gaborone",
+                        })}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs font-semibold text-ceda-burgundy">
+                      Decided by {item.adjudicatorName}
+                    </p>
+                    {item.rationale ? (
+                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-ceda-body">
+                        {item.rationale}
+                      </p>
+                    ) : (
+                      <p className="mt-2 text-sm text-ceda-muted">
+                        No written rationale was recorded for this decision.
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
             </ol>
           </section>
         )}

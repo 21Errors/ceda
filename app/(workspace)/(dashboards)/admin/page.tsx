@@ -65,6 +65,16 @@ async function AdminContent() {
               Manage FAQs
             </Link>
             <Link
+              href="/admin/content/documents"
+              className="inline-flex min-h-11 w-fit items-center rounded-full border border-ceda-line bg-white px-5 text-sm font-bold text-ceda-burgundy hover:bg-[#FFF9F4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy">
+              Document templates
+            </Link>
+            <Link
+              href="/admin/content/pages"
+              className="inline-flex min-h-11 w-fit items-center rounded-full border border-ceda-line bg-white px-5 text-sm font-bold text-ceda-burgundy hover:bg-[#FFF9F4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy">
+              Pages &amp; news
+            </Link>
+            <Link
               href="/admin/audit"
               className="inline-flex min-h-11 w-fit items-center rounded-full border border-ceda-line bg-white px-5 text-sm font-bold text-ceda-burgundy hover:bg-[#FFF9F4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ceda-burgundy">
               View audit trail
@@ -123,8 +133,19 @@ async function AdminContent() {
               className="font-semibold text-ceda-burgundy underline underline-offset-4">
               Manage submission categories
             </Link>
-            . Portal document management and broader content editing remain to
-            be added.
+            ,{" "}
+            <Link
+              href="/admin/content/documents"
+              className="font-semibold text-ceda-burgundy underline underline-offset-4">
+              upload downloadable document templates
+            </Link>
+            , or{" "}
+            <Link
+              href="/admin/content/pages"
+              className="font-semibold text-ceda-burgundy underline underline-offset-4">
+              edit public guidelines &amp; announcements
+            </Link>
+            .
           </p>
         </section>
       </div>

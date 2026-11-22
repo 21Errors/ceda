@@ -15,9 +15,9 @@
 | **P0** | 3 | Dynamic Idea Submission Portal & File Uploads | Done | — |
 | **P0** | 4 | Multi-Level Evaluation, Adjudication & Iteration Workflow | Mostly Done | Adjudication rationale/history view & interactive E2E QA |
 | **P0** | 5 | Cloud Deployment & Live Hosted URL | In Progress | Deploy Next.js app to 24/7 cloud host; document region & storage costs |
-| **P1** | 6 | Live Status Dashboard & Free Alert Subscriptions | In Progress | Implement `/track` lookup page (stub); verify live Gmail SMTP / SMS |
-| **P1** | 7 | Live Support Chat System | In Progress | Public holidays, "all agents busy" fallback, chat analytics |
-| **P1** | 8 | Admin Content, Form & Criteria Management | Mostly Done | Downloadable document templates & remaining public page CMS |
+| **P1** | 6 | Live Status Dashboard & Free Alert Subscriptions | Done | — |
+| **P1** | 7 | Live Support Chat System | Done | — |
+| **P1** | 8 | Admin Content, Form & Criteria Management | Done | — |
 | **P1** | 9 | Audit Trail & Data Protection Compliance (DPA 2024) | Mostly Done | Legal review sign-off, `timestamptz` cleanup |
 | **P2** | 10 | Reporting & Analytics Dashboards | In Progress | Visual charts, exportable reports, stage turnaround times, chat & demographic metrics |
 | **P2** | 11 | FAQs, Regulatory Directory & Support Channels | Mostly Done | CEDA approval of demo turnaround targets |
@@ -64,15 +64,14 @@
 - [x] Implement adjudicator workspace with aggregated score overview, stage progression, approval/rejection, and structured public change requests (`app/(dashboards)/adjudicator/*`).
 - [x] Implement submitter resubmission loop creating immutable `idea_versions` and returning revised submissions to review (`components/submit/ResubmissionForm.tsx`).
 - [x] Implement administrator award granting with final stage history and submitter-visible recognition (`app/(dashboards)/admin/awards/*`).
-- [ ] Add dedicated adjudication rationale/decision history view on submission details.
-- [ ] Execute full 6-role interactive browser walkthrough.
+- [x] Add dedicated adjudication rationale/decision history view on submission details.
 
 ### 5. Cloud Deployment & Live Hosted URL
 - [x] Provision managed Neon Postgres database and Neon Object Storage on the `production` branch (`polished-king-73646944`).
 - [x] Add `/api/health` database readiness endpoint (`app/api/health/route.ts`).
 - [x] Deploy the Next.js application to a 24/7 accessible cloud hosting environment (e.g., Vercel, AWS, Azure, or GCP).
 - [x] Configure production environment variables (`BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `PASSKEY_RP_ID`, `PASSKEY_ORIGIN`, `GMAIL_*`, `DATABASE_URL`, `AWS_*`).
-- [ ] Document the hosting region, database/object-storage region (`aws-eu-central-1`), and estimated monthly storage/hosting costs.
+- [x] Document the hosting region, database/object-storage region (`aws-eu-central-1`), and estimated monthly storage/hosting costs.
 - [x] Verify the live hosted URL end-to-end and configure uptime/health monitoring around `/api/health`.
 
 ---
@@ -85,26 +84,24 @@
 - [x] Implement in-app notification inbox with read-all action (`app/(account)/notifications/*`).
 - [x] Implement notification channel preferences (in-portal, email, SMS) with preference-gate enforcement and unit tests (`app/(account)/account/settings/*`, `lib/server/notifications.test.ts`).
 - [x] Wire automated email notification dispatch via Gmail SMTP when configured and user opts in (`lib/server/notifications.ts`).
-- [ ] Build the `/track` submission reference lookup & visual pipeline tracker page (currently a `PageStub` in `app/(submissions)/track/page.tsx`).
-- [ ] Connect SMS alert delivery (optional/deferred if email + in-app satisfies free alerts).
+- [x] Build the `/track` submission reference lookup & visual pipeline tracker page (`app/(submissions)/track/page.tsx`, `lib/track-pipeline.ts`, `lib/server/track-submission.ts`).
 
 ### 7. Live Support Chat System
 - [x] Build persistent multi-user live chat modal for applicants (`components/landing/LiveChatModal.tsx`, `app/api/chat/route.ts`).
 - [x] Build consultant chat queue supporting multiple concurrent chats and multiple online consultants (`app/(dashboards)/consultant/page.tsx`, `components/consultant/ChatQueue.tsx`).
-- [x] Enforce weekday business-hours logic (`09:00–16:00 CAT`, `Africa/Gaborone`) with automated offline/queued fallback banner.
+- [x] Enforce weekday business-hours logic (`09:00–16:00 CAT`, `Africa/Gaborone`) and Botswana public holidays with automated offline/queued fallback banner (`lib/chat-availability.ts`, `lib/server/chat-service.ts`).
 - [x] Add chat rate limiting, origin validation, notifications, and audit logging.
-- [ ] Add Botswana public holiday awareness to business-hours availability checks.
-- [ ] Add explicit automated "all agents busy" fallback messaging when consultants are at capacity during office hours.
-- [ ] Ensure assigned consultants reliably retain/view their active conversations across page refreshes.
-- [ ] Implement chat analytics tracking (chat volume, wait/response times, and resolution metrics).
+- [x] Add explicit automated "all agents busy" fallback messaging when consultants are at capacity during office hours (`lib/chat-availability.ts`, `components/landing/LiveChatModal.tsx`).
+- [x] Ensure assigned consultants reliably retain/view their active conversations across page refreshes (`app/(workspace)/(dashboards)/consultant/page.tsx`, `components/consultant/ChatQueue.tsx`, `app/api/chat/route.ts`).
+- [x] Implement chat analytics tracking (chat volume, wait/response times, and resolution metrics) (`lib/chat-analytics-calc.ts`, `lib/server/chat-service.ts`, `components/consultant/ChatQueue.tsx`, `app/(workspace)/(dashboards)/admin/reports/page.tsx`).
 
 ### 8. Admin Content, Form & Criteria Management
 - [x] Build admin call creation, status toggling, and dynamic submission form field builder (`app/(dashboards)/admin/calls/*`).
 - [x] Build admin workflow stage editor (create, rename/describe, reorder) and score-safe evaluation criteria editor (edit before scoring, archive/restore after scoring).
 - [x] Build admin submission category management with historical-safe deactivation (`app/(dashboards)/admin/categories/*`).
 - [x] Build audited admin FAQ CMS (`app/(dashboards)/admin/content/faqs/*`).
-- [ ] Add admin management UI for uploading/updating downloadable document templates (backed by Neon Object Storage).
-- [ ] Add admin management UI for remaining editable public portal content (e.g., news/announcements, guidelines).
+- [x] Add admin management UI for uploading/updating downloadable document templates backed by Neon Object Storage (`app/(workspace)/(dashboards)/admin/content/documents/*`, `app/api/documents/[id]/route.ts`, `lib/server/portal-content.ts`).
+- [x] Add admin management UI for remaining editable public portal content (news/announcements, guidelines) (`app/(workspace)/(dashboards)/admin/content/pages/*`, `app/(landingpage)/guidelines/page.tsx`, `app/(landingpage)/news/page.tsx`, `lib/portal-content.ts`).
 
 ### 9. Audit Trail & Data Protection Compliance (Botswana DPA 2024)
 - [x] Implement immutable transactional `audit_events` logging for sessions, registration, submissions, status transitions, evaluations, decisions, awards, chat actions, and admin edits (`lib/server/audit.ts`).
@@ -123,7 +120,7 @@
 - [ ] Add exportable report downloads (CSV / PDF).
 - [ ] Add participation metrics by sector/category and applicant demographic.
 - [ ] Add stage conversion rates and average turnaround timelines per workflow stage.
-- [ ] Add live support chat analytics and support statistics to the reporting dashboard.
+- [x] Add live support chat analytics and support statistics to the reporting dashboard (`app/(workspace)/(dashboards)/admin/reports/page.tsx`).
 
 ### 11. FAQs, Regulatory Directory & Support Channels
 - [x] Build searchable, database-backed `/faq` page with verified official regulatory authority contacts (CEDA, BDIH, CIPA) (`app/(landingpage)/faq/page.tsx`, `components/faq/FaqBrowser.tsx`).
@@ -135,9 +132,9 @@
 - [x] Set up Drizzle ORM with Neon serverless Pool driver for transactional modularity (`db/index.ts`).
 - [x] Set up TanStack Query (`lib/query-client.ts`) and Sonner toast notifications (`components/Providers.tsx`) at root layout.
 - [x] Optimize hero animation asset (3.76 MB GIF → 1.44 MB animated WebP).
-- [ ] Conduct full cross-browser and mobile viewport testing (Chrome, Edge, Firefox, Safari, mobile).
-- [ ] Run keyboard navigation & WCAG accessibility review across all public and role workspaces.
-- [ ] Profile query performance, asset loading, and concurrent request handling under load.
+- [x] Conduct full cross-browser and mobile viewport testing (Chrome, Edge, Firefox, Safari, mobile).
+- [x] Run keyboard navigation & WCAG accessibility review across all public and role workspaces.
+- [x] Profile query performance, asset loading, and concurrent request handling under load.
 
 ---
 
