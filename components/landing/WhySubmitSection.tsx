@@ -46,22 +46,25 @@ function ScrollWord({
 
 const pillars = [
   {
+    index: "01",
+    stat: "Live Updates",
+    statLabel: "Status updates at every step",
     title: "See every step of your application",
     body: "Follow your application in real time, from the first check through expert review to the final decision.",
-    stat: "Live updates",
-    statLabel: "at every step",
   },
   {
+    index: "02",
+    stat: "18-35 yrs",
+    statLabel: "Citizen & youth-led focus",
     title: "Made for Batswana entrepreneurs",
     body: "Built for citizen-owned and youth-led businesses that are ready to grow and solve real problems in Botswana.",
-    stat: "18–35 yrs",
-    statLabel: "youth-led focus",
   },
   {
+    index: "03",
+    stat: "No Fees",
+    statLabel: "To submit and track",
     title: "Free to apply",
     body: "There is no fee to submit your idea, get feedback from reviewers, or send an updated version.",
-    stat: "P0",
-    statLabel: "to submit and track",
   },
 ];
 
@@ -104,7 +107,7 @@ export function WhySubmitSection() {
         </div>
 
         {/* Hairline-divided editorial pillars with architectural line draw */}
-        <div className="relative mt-16 lg:mt-24">
+        <div className="relative mt-16 lg:mt-20">
           <motion.div
             aria-hidden="true"
             initial={prefersReduced ? false : { scaleX: 0 }}
@@ -112,22 +115,22 @@ export function WhySubmitSection() {
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             style={{ transformOrigin: "left" }}
-            className="h-px w-full bg-[#7A1F14]/18"
+            className="h-px w-full bg-[#7A1F14]/15"
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-3">
             {pillars.map((pillar, index) => (
               <motion.div
                 key={pillar.title}
-                initial={prefersReduced ? false : { opacity: 0, y: 24 }}
+                initial={prefersReduced ? false : { opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.35 }}
+                viewport={{ once: true, amount: 0.3 }}
                 transition={{
                   duration: 0.55,
-                  delay: 0.1 + index * 0.1,
+                  delay: 0.08 + index * 0.08,
                   ease: [0.22, 1, 0.36, 1],
                 }}
-                className="relative flex flex-col justify-between border-b border-[#7A1F14]/15 py-8 lg:border-b-0 lg:px-8 lg:py-10 lg:first:pl-0 lg:last:pr-0"
+                className="relative flex flex-col border-b border-[#7A1F14]/12 py-8 last:border-b-0 lg:border-b-0 lg:px-10 lg:py-11 lg:first:pl-0 lg:last:pr-0"
               >
                 {index > 0 && (
                   <motion.div
@@ -137,42 +140,59 @@ export function WhySubmitSection() {
                     viewport={{ once: true, amount: 0.3 }}
                     transition={{
                       duration: 0.7,
-                      delay: 0.18 + index * 0.1,
+                      delay: 0.16 + index * 0.08,
                       ease: [0.22, 1, 0.36, 1],
                     }}
                     style={{ transformOrigin: "top" }}
-                    className="pointer-events-none absolute bottom-0 left-0 top-0 hidden w-px bg-[#7A1F14]/15 lg:block"
+                    className="pointer-events-none absolute bottom-0 left-0 top-0 hidden w-px bg-[#7A1F14]/12 lg:block"
                   />
                 )}
 
-                <div>
-                  <h3 className="text-xl font-bold tracking-tight text-[#331F17]">
-                    {pillar.title}
-                  </h3>
-                  <p className="mt-3 max-w-sm text-sm leading-7 text-[#573E32] sm:text-base">
-                    {pillar.body}
+                <span className="font-mono text-xs font-bold tracking-[0.12em] text-[#E8710A]">
+                  {pillar.index}
+                </span>
+
+                <div className="mt-4">
+                  <p className="text-[clamp(2rem,3vw,2.65rem)] font-black leading-none tracking-[-0.03em] text-[#7A1F14] tabular-nums">
+                    {pillar.stat}
+                  </p>
+                  <p className="mt-2 text-xs font-semibold text-[#7F5E4E]">
+                    {pillar.statLabel}
                   </p>
                 </div>
 
-                <div className="mt-8 flex items-baseline gap-2.5 pt-4">
-                  <span className="font-mono text-2xl font-bold tracking-tight text-[#7A1F14] tabular-nums sm:text-3xl">
-                    {pillar.stat}
-                  </span>
-                  <span className="text-xs font-medium text-[#7F5E4E]">
-                    {pillar.statLabel}
-                  </span>
+                <div className="mt-7 border-t border-[#7A1F14]/10 pt-5">
+                  <h3 className="text-lg font-bold tracking-tight text-[#331F17] sm:text-xl">
+                    {pillar.title}
+                  </h3>
+                  <p className="mt-2.5 max-w-sm text-sm leading-7 text-[#573E32]">
+                    {pillar.body}
+                  </p>
                 </div>
               </motion.div>
             ))}
           </div>
+
+          <motion.div
+            aria-hidden="true"
+            initial={prefersReduced ? false : { scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+            style={{ transformOrigin: "left" }}
+            className="h-px w-full bg-[#7A1F14]/15"
+          />
         </div>
 
-        <div className="mt-10 flex items-center justify-start">
+        <div className="mt-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <p className="text-sm text-[#7F5E4E]">
+            Want to check eligibility and required documents first?
+          </p>
           <Link
             href="/guidelines"
-            className="group inline-flex items-center gap-2 text-sm font-bold text-[#7A1F14] underline decoration-[#7A1F14]/30 underline-offset-4 transition hover:decoration-[#7A1F14]"
+            className="group inline-flex min-h-11 items-center  text-sm font-semibold text-[#7A1F14] transition-colors hover:border-[#7A1F14] hover:underline"
           >
-            <span>Read who can apply and how to prepare</span>
+            <span>Who can apply and how to prepare</span>
             <ArrowRight
               aria-hidden="true"
               className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"

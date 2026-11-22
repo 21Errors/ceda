@@ -1488,16 +1488,15 @@ dialog.ds-drawer::backdrop {
 }
 
 .site-menu-button {
-  anchor-name: --site-menu-trigger;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  min-inline-size: 5.75rem;
-  min-block-size: 2.75rem;
+  min-inline-size: 5.5rem;
+  min-block-size: 2.625rem;
   padding-inline: 0.95rem;
   border-radius: var(--radius-pill);
-  border: 1px solid rgba(122, 31, 20, 0.18);
+  border: 1px solid rgba(122, 31, 20, 0.16);
   background-color: var(--ceda-cream-start);
   color: var(--ceda-text-main);
   font-size: 0.875rem;
@@ -1509,7 +1508,7 @@ dialog.ds-drawer::backdrop {
 }
 
 .site-menu-button:hover {
-  border-color: rgba(122, 31, 20, 0.36);
+  border-color: rgba(122, 31, 20, 0.34);
   background-color: var(--ceda-cream-mid);
   color: var(--ceda-burgundy);
 }
@@ -1519,64 +1518,103 @@ dialog.ds-drawer::backdrop {
   outline-offset: 2px;
 }
 
-/* Narrow layout: Native Popover anchored beneath the Menu button */
+/* Desktop inline menu (hidden in narrow mode where the modal <dialog> drawer is used) */
 .site-menu {
-  position: fixed;
-  inset: auto;
-  /* Static fallback offset for browsers without CSS anchor(); overridden below when supported */
-  inset-block-start: 4.85rem;
-  inset-block-start: anchor(--site-menu-trigger bottom);
-  inset-inline-end: var(--space-gutter);
-  inline-size: min(86dvw, 22rem);
-  max-inline-size: calc(100dvw - 2 * var(--space-gutter));
-  block-size: fit-content;
-  max-block-size: calc(100dvh - 6rem);
-  margin: 0;
-  margin-block-start: 0.5rem;
-  padding: 0.625rem;
-  border: 1px solid rgba(122, 31, 20, 0.16);
-  border-radius: 1.25rem;
-  background-color: var(--background);
-  color: var(--ceda-text-main);
-  box-shadow: 0 22px 54px -12px rgba(51, 31, 23, 0.22);
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  display: none;
   list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.site-menu::backdrop {
-  background-color: rgba(46, 27, 20, 0.26);
-  backdrop-filter: blur(2px);
+/* Mobile Navigation Drawer: native modal <dialog> with CSS scroll-snap swipe-to-dismiss */
+.site-drawer {
+  --drawer-width: min(21rem, 84dvw, 100dvw - 24px);
+  --drawer-backdrop: 0;
+  inset: 0;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  overflow: visible;
 }
 
-.site-menu:not(:is(:popover-open, .\:popover-open, [data-popover-open="true"])) {
+.site-drawer::backdrop {
+  background-color: #2E1B14;
+  opacity: calc(var(--drawer-backdrop) * 0.48);
+}
+
+.site-drawer-scroller {
+  position: relative;
+  display: grid;
+  grid-template-columns: 100% var(--drawer-width);
+  overflow-x: scroll;
+  overscroll-behavior: none;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+}
+
+.site-drawer-scroller::-webkit-scrollbar,
+.site-drawer-body::-webkit-scrollbar {
   display: none;
 }
 
-.site-menu:is(:popover-open, .\:popover-open, [data-popover-open="true"]) {
-  display: grid;
-  gap: 0.25rem;
+@media (prefers-reduced-motion: no-preference) {
+  .site-drawer-scroller {
+    scroll-behavior: smooth;
+  }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .site-menu {
-    opacity: 0;
-    translate: 0 -0.35rem;
-    transition:
-      opacity 180ms var(--ease-standard),
-      translate 180ms var(--ease-standard),
-      display 180ms,
-      overlay 180ms;
-    transition-behavior: allow-discrete;
+.site-drawer-scroller::before {
+  content: "";
+  scroll-snap-align: start;
+  scroll-initial-target: nearest;
+}
+
+.site-drawer-sheet {
+  display: flex;
+  flex-direction: column;
+  height: 100svh;
+  background-color: var(--background);
+  color: var(--ceda-text-main);
+  border-inline-start: 1px solid rgba(122, 31, 20, 0.12);
+  box-shadow: -18px 0 48px -12px rgba(46, 27, 20, 0.24);
+  overflow: clip;
+  scroll-snap-align: end;
+}
+
+.site-drawer-body {
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+@property --drawer-backdrop {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+/* Tie drawer ::backdrop opacity directly to swipe/scroll position (gated with @supports) */
+@supports (animation-timeline: scroll()) {
+  .site-drawer {
+    timeline-scope: --site-drawer-fade;
+    animation: fade-site-drawer-backdrop linear both;
+    animation-timeline: --site-drawer-fade;
   }
 
-  .site-menu:is(:popover-open, .\:popover-open, [data-popover-open="true"]) {
-    opacity: 1;
-    translate: 0 0;
+  .site-drawer-scroller {
+    scroll-timeline: --site-drawer-fade x;
+  }
 
-    @starting-style {
-      opacity: 0;
-      translate: 0 -0.35rem;
+  @keyframes fade-site-drawer-backdrop {
+    0% {
+      --drawer-backdrop: 0;
+    }
+    100% {
+      --drawer-backdrop: 1;
     }
   }
 }
@@ -1585,14 +1623,13 @@ dialog.ds-drawer::backdrop {
   position: relative;
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 0.5rem;
-  inline-size: 100%;
   min-block-size: 2.75rem;
-  padding-inline: 0.875rem;
-  border-radius: 0.75rem;
+  padding-inline: 0.75rem;
+  border-radius: 0.5rem;
   color: var(--ceda-text-body);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 500;
   text-decoration: none;
   transition:
@@ -1602,7 +1639,6 @@ dialog.ds-drawer::backdrop {
 
 .site-nav-link:hover {
   color: var(--ceda-burgundy);
-  background-color: var(--ceda-cream-start);
 }
 
 .site-nav-link:focus-visible {
@@ -1612,17 +1648,17 @@ dialog.ds-drawer::backdrop {
 
 .site-nav-link[aria-current="page"] {
   color: var(--ceda-burgundy);
-  background-color: transparent;
   font-weight: 600;
 }
 
 .site-nav-link[aria-current="page"]::after {
   content: "";
-  inline-size: 0.3125rem;
-  block-size: 0.3125rem;
+  position: absolute;
+  inset-inline: 0.75rem;
+  inset-block-end: 0.45rem;
+  block-size: 2px;
   border-radius: 9999px;
   background-color: var(--ceda-burgundy);
-  flex-shrink: 0;
 }
 
 .site-header-actions {
@@ -1631,7 +1667,7 @@ dialog.ds-drawer::backdrop {
   gap: 0.625rem;
 }
 
-/* Wide layout: inline navigation bar using the same semantic <ul> */
+/* Wide layout: inline navigation bar */
 .site-header.is-wide .site-menu-button {
   display: none;
 }
@@ -1640,62 +1676,10 @@ dialog.ds-drawer::backdrop {
   display: flex;
 }
 
-.site-header.is-wide .site-menu-mobile-only {
-  display: none;
-}
-
 .site-header.is-wide .site-menu {
-  position: static;
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  inline-size: auto;
-  max-inline-size: none;
-  block-size: auto;
-  max-block-size: none;
-  overflow: visible;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  opacity: 1;
-  translate: none;
-  transition: none;
-}
-
-.site-header.is-wide .site-menu::backdrop {
-  display: none;
-}
-
-.site-header.is-wide .site-nav-link {
-  inline-size: auto;
-  justify-content: center;
-  padding-inline: 0.75rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-}
-
-.site-header.is-wide .site-nav-link:hover {
-  background-color: transparent;
-  color: var(--ceda-burgundy);
-}
-
-.site-header.is-wide .site-nav-link[aria-current="page"] {
-  background-color: transparent;
-  box-shadow: none;
-  color: var(--ceda-burgundy);
-}
-
-.site-header.is-wide .site-nav-link[aria-current="page"]::after {
-  position: absolute;
-  inset-inline: 0.75rem;
-  inset-block-end: 0.45rem;
-  inline-size: auto;
-  block-size: 2px;
-  border-radius: 9999px;
-  background-color: var(--ceda-burgundy);
 }
 
 @media (forced-colors: active) {
@@ -1775,5 +1759,477 @@ dialog.ds-drawer::backdrop {
   .site-menu,
   .site-account-popover {
     transition: none;
+  }
+}
+
+/* ============================================================================
+   LANDING BENEFITS BENTO GRID & CUSTOM ILLUSTRATION ANIMATIONS
+   ============================================================================ */
+
+.benefits-bento-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .benefits-bento-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+.benefits-bento-card {
+  container: bento-card / inline-size;
+  overflow: clip;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .benefits-bento-card[data-bento-area="funding"] {
+    grid-column: span 7;
+  }
+
+  .benefits-bento-card[data-bento-area="review"] {
+    grid-column: span 5;
+  }
+
+  .benefits-bento-card[data-bento-area="feedback"] {
+    grid-column: span 5;
+  }
+
+  .benefits-bento-card[data-bento-area="advisors"] {
+    grid-column: span 7;
+  }
+}
+
+.benefits-bento-card-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "visual"
+    "body";
+  gap: 1.25rem;
+  block-size: 100%;
+}
+
+.benefits-bento-visual {
+  grid-area: visual;
+}
+
+.benefits-bento-body {
+  grid-area: body;
+}
+
+/* Funding illustration adapts cleanly to card container width */
+.bento-funding-flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+}
+
+@container bento-card (inline-size >= 440px) {
+  .bento-funding-flow {
+    grid-template-columns: minmax(0, 0.9fr) 92px minmax(0, 1.15fr);
+    gap: 0;
+  }
+
+  .bento-funding-branches-wide {
+    display: block;
+  }
+
+  .bento-funding-packet {
+    display: block;
+  }
+
+  .bento-funding-line-narrow {
+    display: none;
+  }
+}
+
+/* Static settled defaults (reduced-motion shows full final visuals) */
+.bento-rubric-bar,
+.bento-feedback-fill {
+  transform-origin: left center;
+}
+
+.bento-funding-packet,
+.bento-review-scan,
+.bento-chat-typing {
+  opacity: 0;
+}
+
+/* Opt in to compositor-driven illustration motion when reduced motion is not preferred */
+@media (prefers-reduced-motion: no-preference) {
+  .benefits-bento-grid .bento-pulse-ring {
+    animation: bentoPulseRing 2.6s cubic-bezier(0.2, 0, 0, 1) infinite;
+  }
+
+  /* 1. Funding card: approved idea -> branching line -> 3 funding doors unlock */
+  .benefits-bento-grid .bento-funding-packet {
+    animation: bentoFundingPacket 6.4s cubic-bezier(0.35, 0, 0.25, 1) infinite;
+  }
+  .benefits-bento-grid .bento-door-1 {
+    animation: bentoDoorReveal1 6.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+  .benefits-bento-grid .bento-door-2 {
+    animation: bentoDoorReveal2 6.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+  .benefits-bento-grid .bento-door-3 {
+    animation: bentoDoorReveal3 6.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+  .benefits-bento-grid .bento-door-check-1 {
+    animation: bentoCheckPop1 6.4s ease-out infinite;
+  }
+  .benefits-bento-grid .bento-door-check-2 {
+    animation: bentoCheckPop2 6.4s ease-out infinite;
+  }
+  .benefits-bento-grid .bento-door-check-3 {
+    animation: bentoCheckPop3 6.4s ease-out infinite;
+  }
+
+  /* 2. Fair Review card: scanning rubric sweep + sequential bar fills */
+  .benefits-bento-grid .bento-review-scan {
+    animation: bentoReviewScan 6.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+
+  .benefits-bento-grid .bento-rubric-1 {
+    animation: bentoRubricFill1 6.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+  .benefits-bento-grid .bento-rubric-2 {
+    animation: bentoRubricFill2 6.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+  .benefits-bento-grid .bento-rubric-3 {
+    animation: bentoRubricFill3 6.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+
+  .benefits-bento-grid .bento-score-badge {
+    animation: bentoScorePulse 6.6s ease-out infinite;
+  }
+
+  /* 3. Feedback Loop card: reviewer note -> v2 ready */
+  .benefits-bento-grid .bento-feedback-note {
+    animation: bentoFeedbackNote 6.4s ease-in-out infinite;
+  }
+  .benefits-bento-grid .bento-feedback-fill {
+    animation: bentoFeedbackFill 6.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+  .benefits-bento-grid .bento-feedback-badge {
+    animation: bentoFeedbackBadge 6.4s ease-out infinite;
+  }
+
+  /* 4. Advisor Chat card: question -> typing dots -> helpful reply */
+  .benefits-bento-grid .bento-chat-msg-1 {
+    animation: bentoChatMsg1 8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+  .benefits-bento-grid .bento-chat-typing {
+    animation: bentoChatTyping 8s ease-in-out infinite;
+  }
+  .benefits-bento-grid .bento-typing-dot-1 {
+    animation: bentoTypingDot 1.4s ease-in-out infinite;
+  }
+  .benefits-bento-grid .bento-typing-dot-2 {
+    animation: bentoTypingDot 1.4s ease-in-out 0.2s infinite;
+  }
+  .benefits-bento-grid .bento-typing-dot-3 {
+    animation: bentoTypingDot 1.4s ease-in-out 0.4s infinite;
+  }
+  .benefits-bento-grid .bento-chat-msg-2 {
+    animation: bentoChatMsg2 8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+}
+
+@keyframes bentoPulseRing {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  70%, 100% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+}
+
+@keyframes bentoFundingPacket {
+  0%, 6% {
+    opacity: 0;
+    transform: translateX(0) scale(0.7);
+  }
+  12% {
+    opacity: 1;
+    transform: translateX(8px) scale(1);
+  }
+  26% {
+    opacity: 1;
+    transform: translateX(38px) scale(0.95);
+  }
+  32%, 100% {
+    opacity: 0;
+    transform: translateX(46px) scale(0.6);
+  }
+}
+
+@keyframes bentoDoorReveal1 {
+  0%, 24% {
+    opacity: 0.72;
+    transform: translateX(-3px);
+  }
+  34%, 88% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0.72;
+    transform: translateX(-3px);
+  }
+}
+
+@keyframes bentoDoorReveal2 {
+  0%, 36% {
+    opacity: 0.72;
+    transform: translateX(-3px);
+  }
+  46%, 88% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0.72;
+    transform: translateX(-3px);
+  }
+}
+
+@keyframes bentoDoorReveal3 {
+  0%, 48% {
+    opacity: 0.72;
+    transform: translateX(-3px);
+  }
+  58%, 88% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0.72;
+    transform: translateX(-3px);
+  }
+}
+
+@keyframes bentoReviewScan {
+  0%, 6% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  12%, 28% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  38%, 52% {
+    opacity: 1;
+    transform: translateY(2.85rem);
+  }
+  62%, 76% {
+    opacity: 1;
+    transform: translateY(5.7rem);
+  }
+  86%, 100% {
+    opacity: 0;
+    transform: translateY(5.7rem);
+  }
+}
+
+@keyframes bentoRubricFill1 {
+  0%, 6% {
+    transform: scaleX(0.18);
+  }
+  24%, 86% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(0.18);
+  }
+}
+
+@keyframes bentoRubricFill2 {
+  0%, 28% {
+    transform: scaleX(0.18);
+  }
+  48%, 86% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(0.18);
+  }
+}
+
+@keyframes bentoRubricFill3 {
+  0%, 52% {
+    transform: scaleX(0.18);
+  }
+  72%, 86% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(0.18);
+  }
+}
+
+@keyframes bentoCheckPop1 {
+  0%, 18% {
+    opacity: 0.25;
+    transform: scale(0.75);
+  }
+  26%, 86% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.25;
+    transform: scale(0.75);
+  }
+}
+
+@keyframes bentoCheckPop2 {
+  0%, 42% {
+    opacity: 0.25;
+    transform: scale(0.75);
+  }
+  50%, 86% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.25;
+    transform: scale(0.75);
+  }
+}
+
+@keyframes bentoCheckPop3 {
+  0%, 66% {
+    opacity: 0.25;
+    transform: scale(0.75);
+  }
+  74%, 86% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.25;
+    transform: scale(0.75);
+  }
+}
+
+@keyframes bentoScorePulse {
+  0%, 70%, 100% {
+    transform: scale(1);
+  }
+  78% {
+    transform: scale(1.08);
+  }
+  86% {
+    transform: scale(1);
+  }
+}
+
+@keyframes bentoFeedbackNote {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.85;
+  }
+  18%, 34% {
+    transform: translateY(-2px);
+    opacity: 1;
+  }
+  55% {
+    transform: translateY(0);
+    opacity: 0.85;
+  }
+}
+
+@keyframes bentoFeedbackFill {
+  0%, 48% {
+    transform: scaleX(0.15);
+    opacity: 0.45;
+  }
+  66%, 88% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(0.15);
+    opacity: 0.45;
+  }
+}
+
+@keyframes bentoFeedbackBadge {
+  0%, 58% {
+    opacity: 0.45;
+    transform: scale(0.88);
+  }
+  68%, 88% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.45;
+    transform: scale(0.88);
+  }
+}
+
+@keyframes bentoChatMsg1 {
+  0%, 4% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  14%, 88% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  96%, 100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes bentoChatTyping {
+  0%, 16% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  22%, 38% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  44%, 100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes bentoTypingDot {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+@keyframes bentoChatMsg2 {
+  0%, 38% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  48%, 88% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  96%, 100% {
+    opacity: 0;
+    transform: translateY(-4px);
   }
 }
