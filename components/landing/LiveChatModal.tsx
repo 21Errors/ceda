@@ -62,6 +62,7 @@ function LiveChatWindow({ onClose }: Pick<LiveChatModalProps, "onClose">) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [messageNotice, setMessageNotice] = useState("");
+  const [showConversation, setShowConversation] = useState(false);
 
   const {
     register,
@@ -148,6 +149,7 @@ function LiveChatWindow({ onClose }: Pick<LiveChatModalProps, "onClose">) {
       setError(result?.error ?? "We could not start your conversation.");
       return;
     }
+    setShowConversation(true);
     await refresh();
   }
 
@@ -188,6 +190,7 @@ function LiveChatWindow({ onClose }: Pick<LiveChatModalProps, "onClose">) {
   const allAgentsBusy = availability?.allAgentsBusy ?? false;
   const isPublicHoliday = availability?.status === "public_holiday";
   const conversation = chat?.conversation;
+  const conversationVisible = Boolean(conversation && showConversation);
   const closed = conversation?.status === "closed";
   const queuePosition = chat?.queuePosition ?? null;
 
@@ -311,34 +314,40 @@ function LiveChatWindow({ onClose }: Pick<LiveChatModalProps, "onClose">) {
               className="flex-1 space-y-4 overflow-y-auto bg-[#FFF6EE]/60 p-4 text-sm sm:p-5"
               aria-live="polite"
               aria-label="Conversation messages">
-              {!conversation && (
+              {!conversationVisible && (
                 <div className="flex h-full flex-col items-center justify-center text-center">
                   <MessageSquare className="h-8 w-8 text-ceda-burgundy" />
                   <h3 className="mt-3 font-bold text-ceda-ink">
                     Get help with your submission
                   </h3>
                   <p className="mt-2 max-w-xs text-xs leading-5 text-ceda-muted">
-                    {allAgentsBusy
+                    {conversation && conversation.status !== "closed"
+                      ? "You already have a conversation saved. Continue it when you are ready, or search the published FAQs and guidelines first."
+                      : allAgentsBusy
                       ? "All consultants are currently assisting other applicants, but you can join the queue now and leave your question."
                       : isOpen
                         ? "Start a live conversation with a CEDA service consultant."
                         : "Start a conversation with the CEDA team. Your message will be queued for the next working day."}
                   </p>
                   <div className="mt-4 w-full">
-                    <SupportKnowledgeSearch onHandoff={startConversation} />
+                    <SupportKnowledgeSearch onHandoff={() => {
+                      if (conversation && conversation.status !== "closed") setShowConversation(true);
+                      else void startConversation();
+                    }} />
                   </div>
-                  <button
-                    type="button"
-                    onClick={startConversation}
-                    disabled={busy}
-                    className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-ceda-burgundy px-5 text-sm font-bold text-white hover:bg-[#5C150D] disabled:opacity-60">
-                    <MessageSquare className="h-4 w-4" />
-                    Start a conversation
-                  </button>
+                  {conversation && conversation.status !== "closed" ? (
+                    <button type="button" onClick={() => setShowConversation(true)} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-ceda-burgundy px-5 text-sm font-bold text-white hover:bg-[#5C150D]">
+                      <MessageSquare className="h-4 w-4" /> Continue conversation
+                    </button>
+                  ) : (
+                    <button type="button" onClick={startConversation} disabled={busy} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-ceda-burgundy px-5 text-sm font-bold text-white hover:bg-[#5C150D] disabled:opacity-60">
+                      <MessageSquare className="h-4 w-4" /> {conversation ? "Start a new conversation" : "Start a conversation"}
+                    </button>
+                  )}
                 </div>
               )}
 
-              {conversation && chat?.messages.length === 0 && (
+              {conversationVisible && conversation && chat?.messages.length === 0 && (
                 <p className="mx-auto mt-4 max-w-xs rounded-2xl bg-[#FFF0E2] px-4 py-3 text-center text-xs leading-5 text-[#7A1F14]">
                   {conversation.status === "closed"
                     ? "This conversation is closed."
@@ -352,7 +361,7 @@ function LiveChatWindow({ onClose }: Pick<LiveChatModalProps, "onClose">) {
                 </p>
               )}
 
-              {chat?.messages.map((item) => {
+              {conversationVisible && chat?.messages.map((item) => {
                 const ownMessage = item.senderId === chat.currentUserId;
                 return (
                   <div
@@ -387,7 +396,7 @@ function LiveChatWindow({ onClose }: Pick<LiveChatModalProps, "onClose">) {
                 );
               })}
 
-              {conversation &&
+              {conversationVisible && conversation &&
                 conversation.status === "waiting" &&
                 (chat?.messages.length ?? 0) > 0 &&
                 allAgentsBusy && (
@@ -410,7 +419,7 @@ function LiveChatWindow({ onClose }: Pick<LiveChatModalProps, "onClose">) {
               </p>
             )}
 
-            {conversation && closed ? (
+            {conversationVisible && conversation && closed ? (
               <div className="border-t border-[#7A1F14]/10 bg-white p-4">
                 <p className="text-center text-xs text-ceda-muted">
                   This conversation is closed.
@@ -424,7 +433,7 @@ function LiveChatWindow({ onClose }: Pick<LiveChatModalProps, "onClose">) {
                 </button>
               </div>
             ) : (
-              conversation && (
+              conversationVisible && conversation && (
                 <>
                   <FormErrorAnnouncer
                     errors={errors}
